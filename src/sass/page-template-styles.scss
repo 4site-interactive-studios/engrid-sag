@@ -111,7 +111,7 @@
       text-transform: none;
       border: 0px;
       // padding: 3px 10px 0;
-      font-size: 12px;
+      font-size: 14px;
       line-height: 18px;
       text-align: left;
     
@@ -151,8 +151,17 @@
         width: 40%;
         margin-left: 5%;
       }
+
     }
-    
+
+    // For some reason ENGRid is not resepecting the A CSS Custom Properties, this is a hack so that the A links take on the the typographic look of the element it's placed within
+    a {
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
+
     /*
     * ##########################################################
     * # CONTENT HEADER
@@ -430,7 +439,7 @@
       max-width: calc(100% * (2 / 3));
       input {
         padding-left: 1.75rem;
-        border-color: var(--theme-typography-input-background-color);
+        border-color: var(--theme-typography-input-border-color);
         padding-top: 12px;
         padding-bottom: 12px;
         outline-width: 0;

@@ -78,7 +78,7 @@
    --theme-typography-label-font-family: var(--theme-typography-default-font-family);
    --theme-typography-label-color: initial;
    // --theme-typography-label-font-size: var(--theme-root-font-size);
-   --theme-typography-label-font-size: 12px;
+   --theme-typography-label-font-size: 13px;
    // --theme-typography-label-font-weight: initial;
    --theme-typography-label-font-weight: bold;
    --theme-typography-label-line-height: initial;
@@ -217,12 +217,12 @@
    --theme-typography-primary-button-focus-hover-border-color: var(--theme-typography-button-focus-hover-border-color);
    
    // TYPOGRAPHY A
-   --theme-typography-a-font-family: var(--theme-typography-default-font-family);
-   --theme-typography-a-color: initial;
-   --theme-typography-a-font-size: var(--theme-root-font-size);
-   --theme-typography-a-font-weight: initial;
-   --theme-typography-a-line-height: initial;
-   --theme-typography-a-text-decoration: initial;
+   --theme-typography-a-font-family: inherit;
+   --theme-typography-a-color: var(--theme-cta);
+   --theme-typography-a-font-size: unset;
+   --theme-typography-a-font-weight: inherit;
+   --theme-typography-a-line-height: inherit;
+   --theme-typography-a-text-decoration: underline;
 
    // TYPOGRAPHY A:FOCUS
    // TYPOGRAPHY A:HOVER
@@ -238,7 +238,6 @@
    --theme-page-background-color: var(--color-transparent);
    --theme-content-background-color: var(--theme-cta);
    --theme-body-background-color: var(--color-white);
-
    // ENGRID SECTIONS BACKGROUND COLOR
    --theme-page-alert-background-color: var(--theme-page-background-color);
    --theme-content-header-background-color: var(--theme-content-background-color);
@@ -260,11 +259,65 @@
    --theme-page-backgroundImageOverlay-background-color: var(--color-transparent);
    --theme-page-customCode-background-color: var(--theme-page-background-color);
 
+       // ENGRID SECTIONS PADDING
+    // QUICK SETTINGS
+    --theme-page-padding: 0px;
+    --theme-content-padding: 0px;
+    --theme-body-padding: 0px 60px;
+    // DETAIL SETTINGS
+    --theme-page-alert-padding: var(--theme-page-padding);
+    --theme-content-header-padding: var(--theme-content-padding);
+    --theme-body-headerOutside-padding: var(--theme-body-padding);
+    --theme-body-header-padding: var(--theme-body-padding);
+    --theme-body-title-padding: var(--theme-body-padding);
+    --theme-body-banner-padding: 0px;
+    --theme-body-bannerOverlay-padding: var(--theme-body-padding);
+    --theme-body-top-padding: var(--theme-body-padding);
+    --theme-body-side-padding: var(--theme-body-padding);
+    --theme-body-main-padding: var(--theme-body-padding);
+    --theme-body-bottom-padding: var(--theme-body-padding);
+    --theme-body-footer-padding: var(--theme-body-padding);
+    --theme-body-footerOutside-padding: var(--theme-body-padding);
+    --theme-content-footerSpacer-padding: var(--theme-content-padding);
+    --theme-content-preFooter-padding: var(--theme-content-padding);
+    --theme-content-footer-padding: var(--theme-content-padding);
+    --theme-page-backgroundImage-padding: 0px;
+    --theme-page-backgroundImageOverlay-padding: var(--theme-page-padding);
+    --theme-page-customCode-padding: var(--theme-page-padding);    
+
+    // ENGRID SECTIONS MARGIN
+    // QUICK SETTINGS
+    --theme-page-margin: 0px;
+    --theme-content-margin: 0px;
+    --theme-body-margin: 0px;
+    // DETAIL SETTINGS
+    --theme-page-alert-margin: var(--theme-page-margin);
+    --theme-content-header-margin: var(--theme-content-margin);
+    --theme-body-headerOutside-margin: var(--theme-body-margin);
+    --theme-body-header-margin: var(--theme-body-margin);
+    --theme-body-title-margin: var(--theme-body-margin);
+    --theme-body-banner-margin: var(--theme-body-margin);
+    --theme-body-bannerOverlay-margin: var(--theme-body-margin);
+    --theme-body-top-margin: var(--theme-body-margin);
+    --theme-body-side-margin: var(--theme-body-margin);
+    --theme-body-main-margin: var(--theme-body-margin);
+    --theme-body-bottom-margin: var(--theme-body-margin);
+    --theme-body-footer-margin: var(--theme-body-margin);
+    --theme-body-footerOutside-margin: var(--theme-body-margin);
+    --theme-content-footerSpacer-margin: var(--theme-content-margin);
+    --theme-content-preFooter-margin: var(--theme-content-margin);
+    --theme-content-footer-margin: var(--theme-content-margin);
+    --theme-page-backgroundImage-margin: var(--theme-page-margin);
+    --theme-page-backgroundImageOverlay-margin: var(--theme-page-margin);
+    --theme-page-customCode-margin: var(--theme-page-margin);   
+
+
    // LAZY LOADED BANNER IMAGE PLACEHOLDER COLOR
    --theme-body-banner-image-background-color: var(--color-transparent);
 
    // BODY BORDER RADIUS
-   --theme-body-border-radius: 0px;
+   // @TODO This doesn't do anything at the moment
+   --theme-body-border-radius: var(--theme-typography-input-border-radius);
    
    // ENGRID BACKGROUND IMAGE SECTION'S BACKGROUND PATTERN
    // This is a background pattern that is shown before the hi-resolution background image is lazy loaded in, if at all
@@ -310,11 +363,13 @@
    --theme-image-attribution-overlay-font-family: var(--theme-typography-default-font-family);
    --theme-image-attribution-overlay-color: rgba(255, 255, 255, 0.9);
    --theme-image-attribution-overlay-text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.15);
-   --theme-image-attribution-overlay-font-size: 75%; 
+   --theme-image-attribution-overlay-font-size: 85%; 
    --theme-image-attribution-overlay-font-style: italic; 
-   --theme-image-attribution-overlay-margin: 1.25ch 1.5ch;
+   --theme-image-attribution-overlay-font-weight: 700;
+   --theme-image-attribution-overlay-text-transform: uppercase;  
+   --theme-image-attribution-overlay-margin: 0;
    --theme-image-attribution-overlay-padding: 1.25ch 1.5ch;
-   --theme-image-attribution-overlay-background-color: rgba(0, 0, 0, 0.3);    
+   --theme-image-attribution-overlay-background-color: rgba(0, 0, 0, 0.8);    
 
    // ADD THEME CUSTOM CSS PROPERTIES HERE
 
