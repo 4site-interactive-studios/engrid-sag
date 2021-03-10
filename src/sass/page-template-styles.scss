@@ -1,12 +1,1006 @@
 /* Add your custom theme styles here */
-// h1{
-//   color:red;
-// }
-// @TODO Place styles here
-
 .body-header{
     margin-top: 2rem;
 }
 .body-footer{
     margin-bottom: 2rem;
 }
+
+/* Add your custom theme styles here */
+
+/*
+* ##########################################################
+* # START SAG ENGRID CUSTOM THEME
+* ##########################################################
+*/
+[data-engrid-theme="sag"] {
+
+
+    /*
+    * ##########################################################
+    * # GENERAL STYLES
+    * ##########################################################
+    */
+
+    form{
+        margin: 0;
+    }
+    
+    #designed-by-4site-wrapper {
+      flex-basis: 100%;
+      text-align: center;
+      display: none;
+    }
+    
+    .en__field__item {
+      label {
+        font-size: 20px;
+      }
+    }
+    
+    .sms-disclaimer > p:first-child{
+      margin-top: 0;
+    }
+
+    
+    .en__component--formblock .en__field.en__field--checkbox > label,
+    #en__field_transaction_recurrpay {
+      display: none;
+    }
+    
+    .en__field__input--checkbox:checked + .en__field__label:before {
+      box-shadow: none;
+    }
+    
+    .en__field__input--checkbox + .en__field__label:before {
+      height: 2rem;
+      width: 2rem;
+      top: 0;
+      left: 0;
+    }
+    .en__field__input--checkbox:checked + .en__field__label::after {
+      left: 7px;
+      top: 7px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    
+    label.en__field__label.en__field__label--item {
+      padding: 12px 5px;
+      width: 100%;
+    //   text-transform: uppercase;
+    //   font-family: "AmnestyTradeGothic";
+      justify-content: center;
+      display: inline-block;
+      text-align: center;
+    }
+    
+    select {
+      background-image: url("https://aaf1a18515da0e792f78-c27fdabe952dfc357fe25ebf5c8897ee.ssl.cf5.rackcdn.com/1839/caret.png?v=1614604340000");
+      background-size: 10px 7px;
+    }
+    
+    .en__field__input--splitselect {
+      min-height: 41.78px;
+    }
+    
+    .en__component--formblock {
+      label {
+        letter-spacing: 0.06rem;
+        font-weight: 700;
+      }
+    }
+    
+    // .en__submit button {
+    //   font-family: "AmnestyTradeGothic";
+    //   font-weight: 700;
+    // }
+    
+    input::placeholder,
+    select {
+      color: var(--theme-typography-input-placeholder-color);
+    }
+    
+    input.en__field__input--checkbox:checked
+    + label.en__field__label.en__field__label--item,
+    input.en__field__input--checkbox
+    + label.en__field__label.en__field__label--item {
+      font-weight: 500;
+      font-family: var(--theme-typography-default-font-family);
+      text-transform: none;
+      border: 0px;
+      // padding: 3px 10px 0;
+      font-size: 12px;
+      line-height: 18px;
+      text-align: left;
+    
+      justify-content: flex-start;
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0 0 42px;
+      margin-left: 0px;
+    }
+    
+    h2.section-header {
+      width: 100%;
+      text-align: center;
+    //   font-family: "AmnestyTradeGothic";
+    //   font-weight: 700;
+      position: relative;
+      letter-spacing: 1.25px;
+      font-size: 16px;
+      overflow: hidden;
+      margin: 10px 0 20px;
+      &:before,
+      &:after {
+        position: absolute;
+        top: 51%;
+        width: 45%;
+        overflow: hidden;
+        height: 2px;
+        content: "\a0";
+        background-color: #e4e4e4;
+      }
+      &:before {
+        margin-left: -50%;
+        text-align: right;
+      }
+      &:after {
+        width: 40%;
+        margin-left: 5%;
+      }
+    }
+    
+    /*
+    * ##########################################################
+    * # CONTENT HEADER
+    * ##########################################################
+    */
+    
+    .content-header {
+      .en__component--codeblock {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 1rem;
+      }      
+    }
+    
+    
+    /*
+    * ##########################################################
+    * # BODY HEADER
+    * ##########################################################
+    */
+    
+    .body-header {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    
+    /*
+    * ##########################################################
+    * # BODY TOP
+    * ##########################################################
+    */
+    .body-top {
+    
+      // If the first child is a paragraph or click-to-expand block, add top margin like it was a H1
+      & > p:first-child,
+      & > .click-to-expand-text-wrapper:first-child {
+        margin-top: 0.67rem;
+      }
+    
+      h1 {
+        font-size: 47px;
+        line-height: 56.68px;
+        margin-bottom: 0;
+      }
+    }
+    
+    /*
+    * ##########################################################
+    * # BODY MAIN
+    * ##########################################################
+    */
+    .body-main {
+      padding-top: 40px;
+    }
+    
+    
+    /*
+    * ##########################################################
+    * # CONTENT FOOTER
+    * ##########################################################
+    */
+    .content-footer{
+        --theme-typography-p-color: #ffffff;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        > div{
+            max-width: 600px;
+            text-align: center;
+        }
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+      }
+      #footer-menu {
+        margin: 0 0 0 50px;
+        li {
+          padding-right: 15px;
+          margin-right: 15px;
+          border-right: 1px solid black;
+          font-size: 14px;
+          letter-spacing: 0.1ch;
+          &:nth-child(3) {
+            border-right: 0px;
+          }
+          a {
+            font-weight: 400;
+            font-family: var(--theme-typography-default-font-family);
+            font-size: 14px;
+          }
+        }
+      }
+      #footer-social-wrapper {
+        flex: 1;
+        ul {
+          justify-content: flex-end;
+          margin: 0px;
+          li {
+            margin: 0 9px;
+          }
+        }
+        img {
+          width: auto;
+          height: 20px;
+        }
+      }
+    }
+    
+    /*
+    * ##########################################################
+    * # OUTLINE COLOR FOR FOCUS STATE
+    * ##########################################################
+    */
+    
+    // *:focus{
+    //   outline-color: initial;
+    // }
+    
+    // input:focus,
+    // select:focus,
+    // textarea:focus{
+    //   outline-width: 0px;
+    // }
+    
+    // .en__field__element--checkbox input:focus + label{
+    //   outline-color: black;
+    // }
+    
+    
+    // .en__field__element--radio input:focus + label,
+    // button:focus{
+    //   outline-color: black;
+    // }
+    
+    
+    /*
+    * ##########################################################
+    * # EN WIDGET: PROGRESS BAR (AKA THERMOMETER)
+    * ##########################################################
+    */
+    
+    // Needed for local development where the thermometer markup has to be hard coded and creates a vestigial empty div
+    .enWidget:empty{
+      display: none;
+    }
+    
+    .enWidget--progressBar {
+      padding: 20px 0;
+    
+      .enWidget__progress{
+        border: 0px !important; // !important required
+        background: rgba(228,228,228,0.36) !important; // !important required
+        height: 24px !important; // !important required
+        overflow: inherit;
+    
+        .enWidget__fill {
+          background-color: var(--theme-cta) !important; // !important required
+          box-shadow: inset -13px 0px 0px 0px rgba(255, 255, 255, 1);
+          &::before{
+            content: " ";
+            display: block;
+            width: 3px;
+            height: calc(100% + 6px);
+            position: absolute;
+            right: 0;
+            top: -3px;
+            background-color: #000000;
+          }
+          &::after{
+            content: " ";
+            display: block;
+            width: 10px;
+            height: 100%;
+            position: absolute;
+            right: -10px;
+            top: 0px;
+            background-color: #ffffff;
+          }
+          span {
+            display: none;
+          }
+        }
+    
+      }
+    
+      .enWidget__copy--below{
+        margin-top: 10px;
+        text-align: center;
+        font-weight: 700;
+    
+        p{
+          margin: 0;
+          text-transform: uppercase;
+          &:nth-child(1){
+            font-size: 32px;
+            line-height: 32px;
+          }
+        }
+    
+      }
+    }
+    
+    /*
+    * ##########################################################
+    * # DONATION: AMOUNT AND FREQUENCY FIELDS
+    * ##########################################################
+    */
+    
+    .en__field--recurrfreq{
+      .en__field__item  input:checked + label.en__field__label.en__field__label--item {
+        background-color: var(--theme-typography-primary-button-background-color);
+        color: var(--theme-typography-primary-button-color);
+        border-color: var(--theme-typography-primary-button-background-color);
+        &:hover {
+          color: var(--theme-typography-primary-button-color);
+        }
+      }
+    }
+    
+    .en__field--donationAmt .en__field__element--radio {
+      width: 100%;
+    }
+    
+    .en__component.en__component--copyblock.recurring-frequency-y-hide.inline-monthly-upsell {
+      position: relative;
+      background-repeat: no-repeat;
+      background-size: 90%;
+      background-position: center;
+      padding: 0 10px;
+      margin-bottom: 1rem;
+      p {
+        margin: 20px 0 0;
+        font-size: 16px;
+        line-height: 24px;
+        font-weight: 700;
+      }
+      &::before {
+        content: "";
+        background-image: url("https://aaf1a18515da0e792f78-c27fdabe952dfc357fe25ebf5c8897ee.ssl.cf5.rackcdn.com/1839/upsell_arrow.png?v=1614603925000");
+        width: 26px;
+        height: 15.5px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: absolute;
+        left: calc(50% - 13px);
+      }
+    }
+    
+    .en__field--donationAmt div.en__field__item:not(.en__field__item--other) {
+      flex-basis: calc((100% / 3) - 1rem);
+      max-width: calc(100% / 3);
+      .en__field__label--item {
+        width: 100%;
+        &::after {
+        //   text-transform: uppercase;
+          font-size: 100%;
+          opacity: 1;
+          line-height: inherit;
+        }
+      }
+    }
+    
+    .en__field--donationAmt div.en__field__item.en__field__item--other {
+      flex-basis: calc((100% * (2 / 3)) - 1rem);
+      max-width: calc(100% * (2 / 3));
+      input {
+        padding-left: 1.75rem;
+        border-color: var(--theme-typography-input-background-color);
+        padding-top: 12px;
+        padding-bottom: 12px;
+        outline-width: 0;
+    
+        &:hover,
+        &:focus::after{
+          border-bottom-color: var(--theme-typography-input-focus-hover-border-bottom-color);
+    
+        }
+      }
+    }
+    
+    .en__field--donationAmt .en__field__item--other::before {
+      display: block;
+      content: "$";
+      position: absolute;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 0;
+      height: 0;
+      left: 1rem;
+      top: 50%;
+    }
+    
+    .en__field--recurrfreq {
+      padding-right: 0;
+      .en__field__item {
+        max-width: calc(100% / 3);
+        // margin-right: 0px;
+      }
+    }
+    
+    
+    
+    /*
+    * ##########################################################
+    * # DONATION: PAYMENT FIELDS
+    * ##########################################################
+    */
+    
+      a.whats-this {
+        font-size: 12px;
+        text-transform: none;
+        position: absolute;
+        right: 0;
+        text-decoration: underline;
+        color: #767676;
+        font-weight: 400;
+      }
+    
+      .card,
+      .check,
+      .paypal {
+        flex-basis: calc(100% / 3);
+      }
+    
+      // Makes the paypal logo white and selection
+      .give-by-select.en__field--radio .paypal.en__field__item input[type="radio"]:checked+label span{
+        filter: invert(100%);
+      }
+    
+    
+      .en__field__item.paypal label {
+        span {
+          display: inline-block;
+          height: 16px;
+          width: 16px;
+          background-image: url("https://aaf1a18515da0e792f78-c27fdabe952dfc357fe25ebf5c8897ee.ssl.cf5.rackcdn.com/1839/paypal.png?v=1614704461000");
+          background-repeat: no-repeat;
+          background-size: cover;
+          background-position: center;
+          position: relative;
+          margin-right: 7px;
+          top: 1px;
+        }
+      }
+    
+    
+    /*
+    * ##########################################################
+    * # DONATION: TRUSTED LOGOS
+    * ##########################################################
+    */
+    
+      .trust-logos{
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    
+        img.bbb-logo {
+          margin-right: 10px;
+          filter: grayscale(1) opacity(0.5);
+        }
+    
+        .gs.bbb-logo {
+          margin-right: 10px;
+        }
+        
+        img.verisign-logo{
+          margin-right: 0px;
+        }
+    
+      } 
+    
+    /*
+    * ##########################################################
+    * # MOBILE STYLINGS
+    * ##########################################################
+    */
+    
+      @mixin mobile-content-header {
+        #social-proof-wrapper{
+          display: none;
+        }
+      }
+    
+      // Footer Styles
+      @mixin mobile-content-footer {
+        // Adjust donation amount fields to display two to a Row
+        .en__field--donationAmt div.en__field__item:not(.en__field__item--other) {
+          flex-basis: calc((100% * ( 1 / 2)) - 1rem);
+          max-width: calc(100% * (1 / 2));
+        }
+    
+        .content-footer{
+          --theme-content-footer-background-color: #e4e4e4;
+          
+          footer {
+            flex-direction: column;
+            padding-top: 32px;
+            #footer-menu-wrapper {
+              order: 2;
+              letter-spacing: 0.1ch;
+              margin-bottom: 26px;
+              ul#footer-menu {
+                justify-content: center;
+                flex-wrap: wrap;
+                margin: 0 auto;
+                li {
+                  margin: 5px 10px;
+                  &:nth-child(2) {
+                    border-right: 0px;
+                  }
+                  &:nth-child(3) {
+                    width: 100%;
+                    text-align: center;
+                  }
+                }
+              }
+            }
+    
+            #footer-social-wrapper {
+              order: 1;
+              margin-bottom: 24px;
+              ul {
+                justify-content: center;
+              }
+            }
+    
+            #footer-logo-wrapper {
+              display: none;
+            }
+          }
+        }
+      }
+    
+      @mixin mobile-page-backgroundImage {
+        .page-backgroundImage{
+          display: none;
+        }
+      }
+    
+      // Applying header footer styles at the correct breakpoints
+      &[data-engrid-layout="centerleft1col"],
+      &[data-engrid-layout="centercenter1col"],
+      &[data-engrid-layout="centerright1col"]{
+        @media screen and (max-width: 774px) { 
+          @include mobile-content-header;
+          @include mobile-content-footer;
+          @include mobile-page-backgroundImage;
+        }
+      }
+    
+      // Always use the mobile header and footer
+      &[data-engrid-layout="leftleft1col"],
+      &[data-engrid-layout="rightright1col"]{
+        @include mobile-content-header;
+        @include mobile-content-footer;
+        @include mobile-page-backgroundImage;
+      }
+    
+      &[data-engrid-layout="centercenter2col"]{
+        @media screen and (max-width: 999px) { 
+          @include mobile-content-header;
+          @include mobile-content-footer;
+          @include mobile-page-backgroundImage;
+        }
+      }  
+    
+    } // END SAG ENGRID CUSTOM THEME
+    
+    /*
+    * ##########################################################
+    * # START SAG ENGRID CUSTOM LAYOUTS
+    * ##########################################################
+    */
+    
+    /*
+    * ##########################################################
+    * # ENGRID LAYOUTS
+    * # GRID COLUMN AND GRID ROW POSITIONING
+    * ##########################################################
+    */
+    
+    [data-engrid-theme="sag"][data-engrid-layout="leftleft1col"]{   
+    
+      @media screen and (min-width: 775px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                  pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
+                  cc-start lcc-start]  minmax(0px, 0px)        [lcc-end
+                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
+                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  rcc-start]           minmax(0px, 0px)        [rcc-end cc-end
+                  rpc-start]           minmax(0px, 1fr)        [rpc-end pc-end               
+                  ];
+              }
+    
+              .content-header,
+              .content-footer{
+                grid-column: bc;
+              }
+    
+              .body-backgroundImage,
+              .body-backgroundImageOverlay{
+                grid-row: page;
+              }
+    
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centerleft1col"]{   
+    
+      @media screen and (min-width: 775px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                  pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
+                  cc-start lcc-start]  minmax(0px, 128px)      [lcc-end
+                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
+                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  rcc-start]           minmax(0px, 1fr)        [rcc-end cc-end
+                  rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
+                  ];
+              }
+    
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter1col"]{   
+    
+      @media screen and (min-width: 775px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                  pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
+                  cc-start lcc-start]  minmax(0px, 1fr)        [lcc-end
+                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
+                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  rcc-start]           minmax(0px, 1fr)        [rcc-end cc-end
+                  rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
+                  ];
+              }
+    
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centerright1col"]{   
+    
+      @media screen and (min-width: 775px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                  pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
+                  cc-start lcc-start]  minmax(0px, 1fr)        [lcc-end
+                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
+                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  rcc-start]           minmax(0px, 128px)      [rcc-end cc-end
+                  rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
+                  ];
+              }
+    
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="rightright1col"]{   
+    
+      @media screen and (min-width: 775px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                  pc-start lpc-start]  minmax(0px, 1fr)        [lpc-end
+                  cc-start lcc-start]  minmax(0px, 0px)        [lcc-end
+                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
+                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  rcc-start]           minmax(0px, 0px)        [rcc-end cc-end
+                  rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
+                  ];
+              }
+              
+              .content-header,
+              .content-footer{
+                grid-column: bc;
+              }
+    
+              .body-backgroundImage,
+              .body-backgroundImageOverlay{
+                grid-row: page;
+              }
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="leftleft1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centerleft1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centerright1col"]{   
+      @media screen and (max-width: 774px) {
+    
+        /* prettier-ignore */
+        .en__component--advrow,
+        .en__component--advrow .pseudo-subgrid {
+            /* autoprefixer grid: off */
+            grid-template-columns:
+            [
+                pc-start lpc-start]  minmax(0px, 0px)    [lpc-end
+                cc-start lcc-start]  minmax(0px, 0px)    [lcc-end
+                bc-start lbc-start]  minmax(0px, 50vw)   [lbc-end
+                rbc-start]           minmax(0px, 50vw)   [rbc-end bc-end
+                rcc-start]           minmax(0px, 0px)    [rcc-end cc-end
+                rpc-start]           minmax(0px, 0px)    [rpc-end pc-end             
+            ];
+          }
+        }
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter2col"]{
+      @media screen and (min-width: 1000px) {
+        /* prettier-ignore */
+        .en__component--advrow,
+              .en__component--advrow .pseudo-subgrid {
+                  /* autoprefixer grid: off */
+                  grid-template-columns:
+                  [
+                      pc-start lpc-start]  minmax(0px, 0px)     [lpc-end
+                      cc-start lcc-start]  minmax(0px, 1fr)     [lcc-end
+                      bc-start lbc-start]  minmax(0px, 485px)   [lbc-end
+                      rbc-start]           minmax(0px, 485px)   [rbc-end bc-end
+                      rcc-start]           minmax(0px, 1fr)     [rcc-end cc-end
+                      rpc-start]           minmax(0px, 0px)     [rpc-end pc-end             
+                  ];
+    
+                  grid-template-rows:
+                  [
+                    page-start page-alert-start]        min-content        [page-alert-end
+                    content-header-start]               min-content        [content-header-end
+                    body-headerOutside-start]           min-content        [body-headerOutside-end
+                    body-header-start]                  min-content        [body-header-end
+                    body-title-start]                   min-content        [body-title-end
+                    body-banner-start]                  min-content        [body-banner-end
+                    body-bannerOverlay-start]           min-content        [body-bannerOverlay-end
+                    body-top-start]                     minmax(0px, 1fr)   [body-top-end
+                    body-side-start]                    min-content        [body-side-end  
+                    body-main-start]                    min-content        [body-main-end  
+                    body-bottom-start]                  min-content        [body-bottom-end  
+                    body-footer-start]                  min-content        [body-footer-end
+                    body-footerOutside-start]           min-content        [body-footerOutside-end  
+                    content-footerSpacer-start]         max-content        [content-footerSpacer-end
+                    content-preFooter-start]            min-content        [content-preFooter-end
+                    content-footer-start]               min-content        [content-footer-end
+                    page-backgroundImage-start]         min-content        [page-backgroundImage-end
+                    page-backgroundImageOverlay-start]  min-content        [page-backgroundImageOverlay-end page-end
+                    page-customCode-start]              min-content        [page-customCode-end        
+                  ];  
+              }
+    
+              .body-title{
+                grid-row: body-header-end / body-title-end;
+              }
+          
+              .body-banner,
+              .body-bannerOverlay{
+                grid-row: body-title-end / body-banner-end;
+              }
+          
+              .body-top{
+                grid-row: body-banner-end / body-bottom-end;
+              }
+          
+              .body-main{
+                grid-row: body-header-end / body-bottom-start;
+              }
+          
+              .body-bottom{
+                grid-row: body-main-end / body-bottom-end;
+                grid-column: rbc;
+              }
+    
+      }
+    
+      @media screen and (max-width: 999px) {
+        --theme-body-padding: 0px 24px;  
+        /* prettier-ignore */
+        .en__component--advrow,
+        .en__component--advrow .pseudo-subgrid {
+            /* autoprefixer grid: off */
+            grid-template-columns:
+            [
+                pc-start lpc-start]  minmax(0px, 0px)    [lpc-end
+                cc-start lcc-start]  minmax(0px, 0px)    [lcc-end
+                bc-start lbc-start]  minmax(0px, 50vw)   [lbc-end
+                rbc-start]           minmax(0px, 50vw)   [rbc-end bc-end
+                rcc-start]           minmax(0px, 0px)    [rcc-end cc-end
+                rpc-start]           minmax(0px, 0px)    [rpc-end pc-end             
+            ];
+        } 
+    
+        .en__component--advrow > div{
+          grid-column: pc;
+        }
+    
+      }
+    }
+    
+    /*
+    * ##########################################################
+    * # ENGRID LAYOUTS
+    * # SECTION SPACING AND SECTION REMOVAL
+    * ##########################################################
+    */
+    
+    /*
+    * ##########################################################
+    * # HIDE UNUSED SECTIONS
+    * ##########################################################
+    */
+    
+    .page-alert,
+    .body-headerOutside,
+    .body-bannerOverlay,
+    .body-footerOutside,
+    .content-preFooter,
+    .page-backgroundImageOverlay{
+      display: none;
+    }
+    
+    body#en__pagebuilder .content-footerSpacer{
+      display: none;
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="leftleft1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centerleft1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centerright1col"],  
+    [data-engrid-theme="sag"][data-engrid-layout="rightright1col"]{
+      --theme-body-padding: 0px 60px;
+    
+      .body-bottom {
+        padding-bottom: 60px;
+      }
+    
+      @media screen and (max-width: 774px) {
+        --theme-body-padding: 0px 24px;
+      }
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centerleft1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter1col"],
+    [data-engrid-theme="sag"][data-engrid-layout="centerright1col"]{
+      @media screen and (min-width: 775px) {
+        .body-header {
+          margin-top: 80px;
+        }
+        
+        .body-footer {
+          margin-bottom: 80px;
+        } 
+      }
+    
+    }
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter2col"]{
+      --theme-body-padding: 0px 50px;
+    
+      // Remove the box body based shadow, otherwise it will overlap with the side-by-side content
+      .body-header:before,
+      .body-title:before,
+      .body-banner:before,
+      .body-top:before, 
+      .body-side:before,
+      .body-main:before,
+      .body-bottom:before,
+      .body-footer:before{
+        display: none;
+      }
+    
+      .body-bottom {
+        padding-bottom: 60px;
+      }
+
+      .body-footer{
+          padding-top: 0;
+          padding-bottom: 0;
+      }
+    
+      @media screen and (min-width: 1000px) {
+        .body-header {
+          margin-top: 80px;
+        }
+        
+        .body-footer {
+          margin-bottom: 80px;
+        }
+      }
+    
+      @media screen and (max-width: 999px) {
+        --theme-body-padding: 0px 24px;
+      }
+    
+    }
+    
+    /*
+    * ##########################################################
+    * # ENGRID LAYOUTS
+    * # SECTION SPECIFIC STYLING
+    * ##########################################################
+    */
+    
+    [data-engrid-theme="sag"][data-engrid-layout="centercenter2col"]{
+      @media screen and (min-width: 1000px) {
+        .body-title,
+        .body-banner,
+        .body-bannerOverlay,
+        .body-top{
+          --theme-body-title-background-color: #f5f5f5;
+          --theme-body-banner-background-color: #f5f5f5;
+          --theme-body-top-background-color: #f5f5f5;
+        }
+      }
+    }
+    
+    // END SAG ENGRID CUSTOM LAYOUTS
