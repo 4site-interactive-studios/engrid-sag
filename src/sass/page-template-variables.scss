@@ -230,8 +230,8 @@
    --theme-typography-a-focus-hover-text-decoration: initial;
 
    // CTA COLORS
-   --theme-cta: #1DC7FA;
-   --theme-cta-hover: #22a3cb;
+   --theme-cta: #3b716c;
+   --theme-cta-hover: #325750;
 
    // PAGE, CONTENT, and BODY BACKGROUND COLOR
    // Quick set the background color on all corresponding sections
@@ -375,3 +375,9 @@
 
 }
 
+[data-engrid-subtheme="emergency"]{
+      // CTA COLORS
+      --theme-cta: #fa1d1d;
+      --theme-cta-hover: #fa1d1d;
+
+}
