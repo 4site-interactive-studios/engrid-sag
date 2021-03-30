@@ -375,9 +375,13 @@
 
 }
 
-[data-engrid-subtheme="emergency"]{
-      // CTA COLORS
-      --theme-cta: #fa1d1d;
-      --theme-cta-hover: #fa1d1d;
+// FRANCISCAN CHALLENGE STYLES
+
+[data-engrid-subtheme="hnp"]{
+
+   // TYPOGRAPHY H1
+   --theme-typography-h1-font-family: 'ITC Goudy Sans LT';
+   --theme-typography-h1-color: #3b716c;
 
 }
+
