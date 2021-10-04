@@ -1,9 +1,25 @@
 /* Add your custom theme styles here */
+
+/** Added margins to these layouts **/
+[data-engrid-layout="centerleft1col"],
+[data-engrid-layout="centercenter1col"],
+[data-engrid-layout="centercenter2col"],
+[data-engrid-layout="centerright1col"]{
 .body-header{
     margin-top: 2rem;
 }
 .body-footer{
     margin-bottom: 2rem;
+}
+}
+
+/** Hides the bgimage when leftleft1col or rightright1col **/
+body:not(#en__pagebuilder){
+  .page-backgroundImage{
+    img{
+      display: none;
+    }
+  }
 }
 
 /* Add your custom theme styles here */
@@ -69,8 +85,6 @@
     label.en__field__label.en__field__label--item {
       padding: 12px 5px;
       width: 100%;
-    //   text-transform: uppercase;
-    //   font-family: "AmnestyTradeGothic";
       justify-content: center;
       display: inline-block;
       text-align: center;
@@ -631,9 +645,11 @@
       // Always use the mobile header and footer
       &[data-engrid-layout="leftleft1col"],
       &[data-engrid-layout="rightright1col"]{
-        @include mobile-content-header;
-        @include mobile-content-footer;
-        @include mobile-page-backgroundImage;
+        @media screen and (max-width: 774px) { 
+          @include mobile-content-header;
+          @include mobile-content-footer;
+          @include mobile-page-backgroundImage;
+        }
       }
     
       &[data-engrid-layout="centercenter2col"]{
@@ -946,11 +962,11 @@
     [data-engrid-theme="sag"][data-engrid-layout="centerright1col"]{
       @media screen and (min-width: 775px) {
         .body-header {
-          margin-top: 80px;
+          margin-top: 40px;
         }
         
         .body-footer {
-          margin-bottom: 80px;
+          margin-bottom: 40px;
         } 
       }
     
