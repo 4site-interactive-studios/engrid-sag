@@ -33,14 +33,14 @@
    --theme-font-stack-browser-fonts: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
    // TYPOGRAPHY DEFAULT
-   --theme-typography-default-font-family: 'Open Sans', sans-serif;
+   --theme-typography-default-font-family: 'Montserrat', sans-serif;
    --theme-typography-default-color: initial;
    --theme-typography-default-font-size: var(--theme-root-font-size);
    --theme-typography-default-font-weight: initial;
    --theme-typography-default-line-height: initial;
        
    // TYPOGRAPHY H1
-   --theme-typography-h1-font-family: 'Bitter', serif;
+   --theme-typography-h1-font-family: 'Montserrat', sans-serif;
    --theme-typography-h1-color: initial;
    --theme-typography-h1-font-size: calc(var(--theme-root-font-size) * var(--scale-up-160pct));
    --theme-typography-h1-font-weight: initial;
@@ -232,7 +232,14 @@
    // CTA COLORS
    --theme-cta: #7B2848;
    --theme-cta-hover:#7B2848;
-
+   
+   // TYPOGRAPHY H1 H2 H3
+   --theme-typography-h1-font-family: 'Montserrat', sans-serif;
+   --theme-typography-h1-color:##7B2848;;
+   --theme-typography-h1-font-weight:700;
+   --theme-typography-h2-font-weight:700;
+   --theme-typography-h3-font-weight:700;
+   
    // PAGE, CONTENT, and BODY BACKGROUND COLOR
    // Quick set the background color on all corresponding sections
    --theme-page-background-color: var(--color-transparent);
@@ -376,8 +383,8 @@
 
 }
 
-// FRANCISCAN CHALLENGE STYLES
-[data-engrid-subtheme="hnp"]{
+// THE FRANCISCAN CHALLENGE STYLES (TFC)
+[data-engrid-subtheme="tfc"]{
 
    // Spacing Body Title
    en__component.en__component.en__component--column.en__component--advcolumn.body-title {
@@ -409,29 +416,159 @@
 
 [data-engrid-subtheme="sag"]{
    // CTA COLORS
-   --theme-cta: #669caf;
-   --theme-cta-hover:#669caf;
-
-   // Spacing Body Title
-   en__component.en__component.en__component--column.en__component--advcolumn.body-title {
-      padding-top: 2rem;
-   }
+   --theme-cta: #7B2848;
+   --theme-cta-hover:#7B2848;
    
    // TYPOGRAPHY H1
-   --theme-typography-h1-font-family: 'ITC Goudy Sans LT';
-   --theme-typography-h1-color:#669caf;
+   --theme-typography-h1-color:#7B2848;
+}
+
+// THE FRANCISCANS STYLES - FCN
+
+[data-engrid-subtheme="fcn"]{
+   // CTA COLORS
+   --theme-cta: #698488;
+   --theme-cta-hover:#698488;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#698488;
 
    // RADIO TO BUTTON STYLES
    .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
       color: #ffffff;
-      background-color: #669caf;
+      background-color: #698488;
       border-color: #bbb;
    }
 
    //DONATION AMOUNT RADIO STYLES
    .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
       color: #ffffff;
-      background-color:#669caf;
+      background-color:#698488;
+      border-color: #bbb;
+   }
+
+}
+
+
+// THE FRANCISCAN RELIEF STYLES - FRF
+[data-engrid-subtheme="frf"]{
+   // CTA COLORS
+   --theme-cta: #7B2848;
+   --theme-cta-hover:#7B2848;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#7B2848;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: #ffffff;
+      background-color: #7B2848;
+      border-color: #bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#7B2848;
+      border-color: #bbb;
+   }
+
+}
+
+// HOLY NAME PROVINCE STYLES - HNP
+[data-engrid-subtheme="hnp"]{
+   // CTA COLORS
+   --theme-cta: #18184D;
+   --theme-cta-hover:#18184D;
+
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#18184D;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: #ffffff;
+      background-color: #18184D;
+      border-color: #bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#18184D;
+      border-color: #bbb;
+   }
+
+}
+
+
+// BLESSED MOTHER - TBM
+[data-engrid-subtheme="tbm"]{
+   // CTA COLORS
+   --theme-cta: #4470B1;
+   --theme-cta-hover:#4470B1;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#4470B1;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: #ffffff;
+      background-color: #4470B1;
+      border-color: #bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#4470B1;
+      border-color: #bbb;
+   }
+}
+
+// ST JUDE STYLES- STJ
+[data-engrid-subtheme="stj"]{
+   // CTA COLORS
+   --theme-cta: #00A984;
+   --theme-cta-hover:#00A984;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#00A984;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: #ffffff;
+      background-color: #00A984;
+      border-color: #bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#00A984;
+      border-color: #bbb;
+   }
+}
+
+// ST JUDE STYLES - FMU
+[data-engrid-subtheme="fmu"]{
+   // CTA COLORS
+   --theme-cta:#E17E36;
+   --theme-cta-hover:#E17E36;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#E17E36;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: #ffffff;
+      background-color: #E17E36;
+      border-color: #bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#E17E36;
       border-color: #bbb;
    }
 
