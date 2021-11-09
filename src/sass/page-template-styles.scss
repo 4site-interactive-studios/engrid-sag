@@ -914,6 +914,39 @@ body:not(#en__pagebuilder){
     
       }
     }
+
+
+    /* Footer Design */
+
+    [data-engrid-theme=sag]{
+
+    footer {
+      color: #fff;
+      font-size: .8rem;
+      letter-spacing: .1rem;
+      font-weight: normal;
+    }
+    
+    .footer {
+      color: #fff;
+      font-size: .8rem;
+      letter-spacing: .1rem;
+      font-weight: normal;
+     }
+  
+    footer a {
+      color: #fff;
+      text-decoration:underline;
+    }
+  
+    .footerlink {
+      color: #fff;
+      text-decoration:underline;
+      font-size: .8rem;
+      letter-spacing: .1rem;
+      font-weight: normal;
+   }
+  }
     
     /*
     * ##########################################################

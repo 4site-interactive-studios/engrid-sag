@@ -43,21 +43,21 @@
    --theme-typography-h1-font-family: 'Montserrat', sans-serif;
    --theme-typography-h1-color: initial;
    --theme-typography-h1-font-size: calc(var(--theme-root-font-size) * var(--scale-up-160pct));
-   --theme-typography-h1-font-weight: initial;
+   --theme-typography-h1-font-weight: 700;
    --theme-typography-h1-line-height: initial;
        
    // TYPOGRAPHY H2
    --theme-typography-h2-font-family: var(--theme-typography-h1-font-family);
    --theme-typography-h2-color: initial;
    --theme-typography-h2-font-size: calc(var(--theme-root-font-size) * var(--scale-up-80pct));
-   --theme-typography-h2-font-weight: initial;
+   --theme-typography-h2-font-weight: 700;
    --theme-typography-h2-line-height: initial;
        
    // TYPOGRAPHY H3
    --theme-typography-h3-font-family: var(--theme-typography-h1-font-family);
    --theme-typography-h3-color: initial;
    --theme-typography-h3-font-size: calc(var(--theme-root-font-size) * var(--scale-up-40pct));
-   --theme-typography-h3-font-weight: initial;
+   --theme-typography-h3-font-weight: 700;
    --theme-typography-h3-line-height: initial;
        
    // TYPOGRAPHY P
@@ -196,7 +196,7 @@
    // TYPOGRAPHY BUTTON:FOCUS
    // TYPOGRAPHY BUTTON:HOVER
    --theme-typography-button-focus-hover-color: var(--theme-typography-button-color);
-   --theme-typography-button-focus-hover-background-color: var(--theme-cta-hover);
+   --theme-typography-button-focus-hover-background-color: var(--theme-cta);
    --theme-typography-button-focus-hover-border-color: var(--theme-cta-hover);
 
    // TYPOGRAPHY PRIMARY BUTTON
@@ -272,6 +272,7 @@
     --theme-page-padding: 0px;
     --theme-content-padding: 0px;
     --theme-body-padding: 0px 60px;
+
     // DETAIL SETTINGS
     --theme-page-alert-padding: var(--theme-page-padding);
     --theme-content-header-padding: var(--theme-content-padding);
@@ -381,6 +382,14 @@
 
    // ADD THEME CUSTOM CSS PROPERTIES HERE
 
+   .radio-to-buttons .en__field--radio .en__field__item input[type=radio]:checked+label {
+      border: 3px solid;
+      }
+      
+   .en__field__input--checkbox:checked+.en__field__label:after {
+      content: "\2713";
+      }
+
 }
 
 // THE FRANCISCAN CHALLENGE STYLES (TFC)
@@ -418,9 +427,23 @@
    // CTA COLORS
    --theme-cta: #7B2848;
    --theme-cta-hover:#7B2848;
-   
+
    // TYPOGRAPHY H1
    --theme-typography-h1-color:#7B2848;
+
+   // RADIO TO BUTTON STYLES
+   .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+      color: var(--color-white);
+      background-color: var(--theme-cta-color);
+      border-color:#bbb;
+   }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: var(--color-white);
+      background-color:var(--theme-cta);
+      border-color: #bbb;
+   }
 }
 
 // THE FRANCISCANS STYLES - FCN
@@ -429,8 +452,10 @@
    // CTA COLORS
    --theme-cta: #698488;
    --theme-cta-hover:#698488;
+   --theme-content-header-background-color:#cdcdcdc7;   
+
    
-   // TYPOGRAPHY H1
+   // TYPOGRAPHY H1, H2, H3
    --theme-typography-h1-color:#698488;
 
    // RADIO TO BUTTON STYLES
@@ -448,7 +473,6 @@
    }
 
 }
-
 
 // THE FRANCISCAN RELIEF STYLES - FRF
 [data-engrid-subtheme="frf"]{
@@ -500,7 +524,6 @@
 
 }
 
-
 // BLESSED MOTHER - TBM
 [data-engrid-subtheme="tbm"]{
    // CTA COLORS
@@ -549,7 +572,7 @@
    }
 }
 
-// ST JUDE STYLES - FMU
+// FRANCISCAN MINISTRY UNION - FMU
 [data-engrid-subtheme="fmu"]{
    // CTA COLORS
    --theme-cta:#E17E36;
@@ -570,6 +593,38 @@
       color: #ffffff;
       background-color:#E17E36;
       border-color: #bbb;
+   }
+
+}
+
+
+
+// FRANCISCAN BREADLINE - FBL
+[data-engrid-subtheme="fbl"]{
+   // CTA COLORS
+   --theme-cta:#d3a55b;
+   --theme-cta-hover:#d3a55b;
+   
+   // TYPOGRAPHY H1
+   --theme-typography-h1-color:#d3a55b;
+
+   // RADIO TO BUTTON STYLES
+   // .radio-to-buttons .en__field--radio .en__field__item:hover input[type=radio]:checked+label {
+   //    color: #ffffff;
+   //    background-color: #d3a55b;
+   //    border-color: #bbb;
+   // }
+
+   //DONATION AMOUNT RADIO STYLES
+   .en__field--donationAmt.en__field--radio .en__field__item input[type=radio]:checked+label{
+      color: #ffffff;
+      background-color:#d3a55b;
+      border-color: #bbb;
+   }
+
+   //PADDING BODY TITLE
+   .body-title h3 {
+      padding-top: 2.5rem;
    }
 
 }
