@@ -9,14 +9,14 @@ const TerserPlugin = require("terser-webpack-plugin");
 module.exports = merge(common, {
   mode: "production",
   output: {
-    filename: "engrid.js",
+    filename: "engrid-sag.js",
     path: path.resolve(__dirname, "dist"),
   },
   optimization: {
     minimizer: [new OptimizeCssAssetsPlugin(), new TerserPlugin()],
   },
   plugins: [
-    new MiniCssExtractPlugin({ filename: "engrid.css" }),
+    new MiniCssExtractPlugin({ filename: "engrid-sag.css" }),
     new CleanWebpackPlugin(),
   ],
   module: {
@@ -33,9 +33,7 @@ module.exports = merge(common, {
           },
         ],
       },
-      { test: /\.css$/,
-        loader: "style-loader!css-loader"
-      },
+      { test: /\.css$/, loader: "style-loader!css-loader" },
       {
         test: /\.scss$/,
         use: [
