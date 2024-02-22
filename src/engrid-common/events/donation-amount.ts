@@ -1,4 +1,5 @@
 import { SimpleEventDispatcher } from "strongly-typed-events";
+import { ENGrid } from "../";
 
 export class DonationAmount {
   private _onAmountChange = new SimpleEventDispatcher<number>();
@@ -8,21 +9,43 @@ export class DonationAmount {
   private _dispatch: boolean = true;
   private static instance: DonationAmount;
 
-  private constructor(radios = "transaction.donationAmt", other = "transaction.donationAmt.other") {
+  private constructor(
+    radios = "transaction.donationAmt",
+    other = "transaction.donationAmt.other"
+  ) {
     this._other = other;
     this._radios = radios;
     // Watch Radios Inputs for Changes
     document.addEventListener("change", (e: Event) => {
       const element = e.target as HTMLInputElement;
-      if (element && (element.name == radios || element.name == other)) {
-        element.value = this.removeCommas(element.value);
-        this.amount = parseFloat(element.value);
+      if (element) {
+        if (element.name == radios) {
+          this.amount = parseFloat(element.value);
+        } else if (element.name == other) {
+          const cleanedAmount = ENGrid.cleanAmount(element.value);
+          element.value =
+            cleanedAmount % 1 != 0
+              ? cleanedAmount.toFixed(2)
+              : cleanedAmount.toString();
+          this.amount = cleanedAmount;
+        }
       }
     });
+    // Watch Other Amount Field
+    const otherField = document.querySelector(
+      `[name='${this._other}']`
+    ) as HTMLInputElement;
+    if (otherField) {
+      otherField.addEventListener("keyup", (e: Event) => {
+        this.amount = ENGrid.cleanAmount(otherField.value);
+      });
+    }
   }
 
-
-  public static getInstance(radios = "transaction.donationAmt", other = "transaction.donationAmt.other"): DonationAmount {
+  public static getInstance(
+    radios = "transaction.donationAmt",
+    other = "transaction.donationAmt.other"
+  ): DonationAmount {
     if (!DonationAmount.instance) {
       DonationAmount.instance = new DonationAmount(radios, other);
     }
@@ -49,8 +72,8 @@ export class DonationAmount {
     const currentAmountField = document.querySelector(
       'input[name="' + this._radios + '"]:checked'
     ) as HTMLInputElement;
-    if (currentAmountField && currentAmountField.value) {
-      let currentAmountValue = parseFloat(currentAmountField.value);
+    if (currentAmountField) {
+      let currentAmountValue = parseFloat(currentAmountField.value || "");
 
       if (currentAmountValue > 0) {
         this.amount = parseFloat(currentAmountField.value);
@@ -58,15 +81,37 @@ export class DonationAmount {
         const otherField = document.querySelector(
           'input[name="' + this._other + '"]'
         ) as HTMLInputElement;
-        currentAmountValue = parseFloat(otherField.value);
-        this.amount = parseFloat(otherField.value);
+        currentAmountValue = ENGrid.cleanAmount(otherField.value);
+        this.amount = currentAmountValue;
+      }
+    } else if (
+      ENGrid.checkNested(
+        window.EngagingNetworks,
+        "require",
+        "_defined",
+        "enjs",
+        "getDonationTotal"
+      ) &&
+      ENGrid.checkNested(
+        window.EngagingNetworks,
+        "require",
+        "_defined",
+        "enjs",
+        "getDonationFee"
+      )
+    ) {
+      const total =
+        window.EngagingNetworks.require._defined.enjs.getDonationTotal() -
+        window.EngagingNetworks.require._defined.enjs.getDonationFee();
+      if (total) {
+        this.amount = total;
       }
     }
   }
   // Force a new amount
   public setAmount(amount: number, dispatch: boolean = true) {
     // Run only if it is a Donation Page with a Donation Amount field
-    if (document.getElementsByName(this._radios).length) {
+    if (!document.getElementsByName(this._radios).length) {
       return;
     }
     // Set dispatch to be checked by the SET method
@@ -75,7 +120,7 @@ export class DonationAmount {
     let found = Array.from(
       document.querySelectorAll('input[name="' + this._radios + '"]')
     ).filter(
-      el => el instanceof HTMLInputElement && parseInt(el.value) == amount
+      (el) => el instanceof HTMLInputElement && parseInt(el.value) == amount
     );
     // We found the amount on the radio boxes, so check it
     if (found.length) {
@@ -87,8 +132,17 @@ export class DonationAmount {
       const otherField = document.querySelector(
         'input[name="' + this._other + '"]'
       ) as HTMLInputElement;
-      otherField.focus();
-      otherField.value = parseFloat(amount.toString()).toFixed(2);
+      if (otherField) {
+        const enFieldOtherAmountRadio = document.querySelector(
+          `.en__field--donationAmt.en__field--withOther .en__field__item:nth-last-child(2) input[name="${this._radios}"]`
+        ) as HTMLInputElement;
+        if (enFieldOtherAmountRadio) {
+          enFieldOtherAmountRadio.checked = true;
+        }
+        otherField.value = parseFloat(amount.toString()).toFixed(2);
+        const otherWrapper = otherField.parentNode as HTMLElement;
+        otherWrapper.classList.remove("en__field__item--hidden");
+      }
     }
     // Set the new amount and trigger all live variables
     this.amount = amount;
@@ -103,17 +157,5 @@ export class DonationAmount {
     otherField.value = "";
     const otherWrapper = otherField.parentNode as HTMLElement;
     otherWrapper.classList.add("en__field__item--hidden");
-  }
-  // Remove commas
-  public removeCommas(v: string) {
-    // replace 5,00 with 5.00
-    if (v.length > 3 && v.charAt(v.length - 3) == ',') {
-      v = v.substr(0, v.length - 3) + "." + v.substr(v.length - 2, 2);
-    }
-    else if (v.length > 2 && v.charAt(v.length - 2) == ',') {
-      v = v.substr(0, v.length - 2) + "." + v.substr(v.length - 1, 1);
-    }
-    // replace any remaining commas
-    return v.replace(/,/g, '');
   }
 }
