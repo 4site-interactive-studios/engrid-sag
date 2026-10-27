@@ -1,18 +1,61 @@
-import { Options, App } from "./engrid-common";
+import { Options, App } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
+// import { Options, App } from "../../engrid/packages/scripts"; // Uses ENGrid via Visual Studio Workspace
+
 import "./sass/main.scss";
-import "./scripts/main.js";
+import { customScript } from "./scripts/main";
+
+// The default Remember Me tooltip quotes the clear link, which has no name on a first visit
+(window as any).EngridI18n = {
+  en: {
+    "rememberMe.tooltip":
+      "Check “{label}” to complete forms on this device faster. While your financial information won’t be stored, you should only check this box from a personal device. Use the “Not [your name]?” link to remove the information from your device at any time.",
+  },
+};
 
 const options: Options = {
-  ModalDebug: true,
   applePay: false,
   CapitalizeFields: true,
   ClickToExpand: true,
   CurrencySymbol: "$",
-  CurrencySeparator: ".",
+  DecimalSeparator: ".",
+  ThousandsSeparator: ",",
   MediaAttribution: true,
   SkipToMainContentLink: true,
   SrcDefer: true,
-  onLoad: () => console.log("Starter Theme Loaded"),
+  ProgressBar: true,
+  Placeholders: {
+    "input#en__field_supporter_NOT_TAGGED_42": "Phone Number (Optional)",
+    "textarea#en__field_transaction_comments": "Your personal message",
+    "input#en__field_supporter_bankAccountNumber": "Account Number",
+  },
+  RememberMe: {
+    cookieName: "sag-remember-me",
+    cookieExpirationDays: 365,
+    checked: true,
+    hide: false,
+    fieldOptInSelectorTarget:
+      "div.en__field--NOT_TAGGED_42, div.en__field--phoneNumber, div.en__field--postcode, div.en__field--emailAddress, div.en__field--lastName",
+    fieldOptInSelectorTargetLocation: "after",
+    fieldClearSelectorTarget:
+      "div.en__field--firstName div, div.en__field--emailAddress div",
+    fieldClearSelectorTargetLocation: "after",
+    fieldNames: [
+      "supporter.firstName",
+      "supporter.lastName",
+      "supporter.title",
+      "supporter.emailAddress",
+      "supporter.address1",
+      "supporter.city",
+      "supporter.country",
+      "supporter.region",
+      "supporter.postcode",
+      "supporter.phoneNumber",
+      "supporter.NOT_TAGGED_42", // Phone field on the main donation page
+    ],
+    fieldClearLabel: "{Not $username?}",
+  },
+  Debug: App.getUrlParameter("debug") == "true" ? true : false,
+  onLoad: () => customScript(App),
   onResize: () => console.log("Starter Theme Window Resized"),
 };
 new App(options);

@@ -1,8 +1,14 @@
-/* ENGRID */
-@import "@4site/engrid-styles";
+/* ENGRID ASSETS */
+@import "@4site/engrid-styles"; // Uses ENGrid via NPM
+// @import "../../../engrid/packages/styles"; // Uses ENGrid via Visual Studio Workspace
 
-/* THEME STYLING AND LAYOUTS */
+/* CLIENT THEME CSS CUSTOM PROPERTIES, MUST COME AFTER ENGRID ASSETS */
+/* Unlike the engrid-template, page-template-variables.scss holds CSS Custom Properties */
+/* scoped to [data-engrid-theme="sag"], not SCSS $variables. ENgrid declares its defaults on */
+/* [data-engrid-theme] (same specificity), so the client values must come later to win. */
 @import "./page-template-variables";
+
+/* CLIENT THEME FONTS AND STYLES */
 @import "./page-template-fonts";
 @import "./page-template-styles";
 
