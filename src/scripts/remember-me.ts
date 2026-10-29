@@ -10,8 +10,9 @@
  *
  * Changes from the original are marked with "SAG:":
  * - Imports point to the @4site/engrid-scripts package.
- * - New `cookieDomain` option ("auto" by default): in local cookie mode the cookie is
- *   written to the site's domain, so every subdomain reads the same data.
+ * - The cookie is saved on the site's domain (.nonprofit.org) instead of the current
+ *   subdomain (give.nonprofit.org, join.nonprofit.org), so every subdomain reads the
+ *   same data.
  * - Reading drops an old host-only copy so it can't shadow the shared cookie, moving
  *   its data to the domain when no shared copy exists yet.
  */
@@ -74,9 +75,6 @@ export class RememberMe {
     checked?: boolean;
     encryptData?: boolean;
     hide?: boolean;
-    // SAG: "auto" (default) detects the site's domain, a string forces a domain,
-    // false keeps the cookie host-only like core
-    cookieDomain?: string | false;
   }) {
     this.iframe = null;
     this.encryptData = options.encryptData ? options.encryptData : false;
@@ -89,8 +87,9 @@ export class RememberMe {
     this.cookieExpirationDays = options.cookieExpirationDays
       ? options.cookieExpirationDays
       : 365;
-    // SAG: must run after remoteUrl and encryptData are set
-    this.cookieDomain = this.resolveCookieDomain(options.cookieDomain);
+    // SAG: encrypted local mode keeps its key in this subdomain's localStorage, so
+    // other subdomains couldn't decrypt a shared cookie; keep it host-only there.
+    this.cookieDomain = this.encryptData ? null : RememberMe.detectSiteDomain();
     this.rememberMeOptIn = options.checked ? options.checked : false;
 
     this.fieldNames = options.fieldNames ? options.fieldNames : [];
@@ -593,24 +592,6 @@ export class RememberMe {
     "engagingnetworks.app",
     "engagingnetworks.net",
   ];
-  // SAG
-  private resolveCookieDomain(
-    option: string | false | undefined
-  ): string | null {
-    if (option === false) {
-      return null;
-    }
-    // Remote mode keeps the data on the iframe's domain. Encrypted local mode keeps
-    // its key in this origin's localStorage, so other subdomains couldn't decrypt a
-    // shared cookie and would overwrite it with data encrypted with their own key.
-    if (this.useRemote() || this.encryptData) {
-      return null;
-    }
-    if (option && option !== "auto") {
-      return option;
-    }
-    return RememberMe.detectSiteDomain();
-  }
   // SAG: finds the site's registrable domain (join.stanthonysguild.org ->
   // stanthonysguild.org) by writing a test cookie to each candidate, shortest first.
   // Browsers refuse cookies on public suffixes (org, co.uk...), so the first

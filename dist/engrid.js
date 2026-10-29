@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, October 29, 2026 @ 11:09:43 ET
+ *  Date: Thursday, October 29, 2026 @ 12:53:56 ET
  *  By: rcw-015crmhahsb5u1zmdcjxtfso
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -27721,8 +27721,9 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
  *
  * Changes from the original are marked with "SAG:":
  * - Imports point to the @4site/engrid-scripts package.
- * - New `cookieDomain` option ("auto" by default): in local cookie mode the cookie is
- *   written to the site's domain, so every subdomain reads the same data.
+ * - The cookie is saved on the site's domain (.nonprofit.org) instead of the current
+ *   subdomain (give.nonprofit.org, join.nonprofit.org), so every subdomain reads the
+ *   same data. No new options.
  * - Reading drops an old host-only copy so it can't shadow the shared cookie, moving
  *   its data to the domain when no shared copy exists yet.
  */
@@ -27764,8 +27765,9 @@ class remember_me_RememberMe {
     this.remoteUrl = options.remoteUrl ? options.remoteUrl : null;
     this.cookieName = options.cookieName ? options.cookieName : "engrid-autofill";
     this.cookieExpirationDays = options.cookieExpirationDays ? options.cookieExpirationDays : 365;
-    // SAG: must run after remoteUrl and encryptData are set
-    this.cookieDomain = this.resolveCookieDomain(options.cookieDomain);
+    // SAG: encrypted local mode keeps its key in this subdomain's localStorage, so
+    // other subdomains couldn't decrypt a shared cookie; keep it host-only there.
+    this.cookieDomain = this.encryptData ? null : remember_me_RememberMe.detectSiteDomain();
     this.rememberMeOptIn = options.checked ? options.checked : false;
     this.fieldNames = options.fieldNames ? options.fieldNames : [];
     this.fieldDonationAmountRadioName = options.fieldDonationAmountRadioName ? options.fieldDonationAmountRadioName : "transaction.donationAmt";
@@ -28154,22 +28156,6 @@ class remember_me_RememberMe {
   // shared across them would show one client's supporter data on another client's
   // pages (many clients use the default cookie name), so here it stays host-only.
 
-  // SAG
-  resolveCookieDomain(option) {
-    if (option === false) {
-      return null;
-    }
-    // Remote mode keeps the data on the iframe's domain. Encrypted local mode keeps
-    // its key in this origin's localStorage, so other subdomains couldn't decrypt a
-    // shared cookie and would overwrite it with data encrypted with their own key.
-    if (this.useRemote() || this.encryptData) {
-      return null;
-    }
-    if (option && option !== "auto") {
-      return option;
-    }
-    return remember_me_RememberMe.detectSiteDomain();
-  }
   // SAG: finds the site's registrable domain (join.stanthonysguild.org ->
   // stanthonysguild.org) by writing a test cookie to each candidate, shortest first.
   // Browsers refuse cookies on public suffixes (org, co.uk...), so the first
@@ -28517,9 +28503,7 @@ const rememberMeOptions = {
   fieldClearSelectorTargetLocation: "after",
   fieldNames: ["supporter.firstName", "supporter.lastName", "supporter.title", "supporter.emailAddress", "supporter.address1", "supporter.city", "supporter.country", "supporter.region", "supporter.postcode", "supporter.phoneNumber", "supporter.NOT_TAGGED_42" // Phone field on the main donation page
   ],
-  fieldClearLabel: "{Not $username?}",
-  // Write the cookie to the site's domain (stanthonysguild.org, etc.)
-  cookieDomain: "auto"
+  fieldClearLabel: "{Not $username?}"
 };
 
 // Same guard as ENgrid's App: accessing localStorage throws when storage is blocked

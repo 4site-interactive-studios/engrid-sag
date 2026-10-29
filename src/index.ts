@@ -40,8 +40,6 @@ const rememberMeOptions: RememberMeOptions = {
     "supporter.NOT_TAGGED_42", // Phone field on the main donation page
   ],
   fieldClearLabel: "{Not $username?}",
-  // Write the cookie to the site's domain (stanthonysguild.org, etc.)
-  cookieDomain: "auto",
 };
 
 // Same guard as ENgrid's App: accessing localStorage throws when storage is blocked

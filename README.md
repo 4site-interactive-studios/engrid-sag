@@ -52,6 +52,15 @@ Code that has no ENgrid option goes in `customScript` in [src/scripts/main.js](s
 
 Add `?debug=true` to a page URL to turn on ENgrid's debug mode.
 
+### RememberMe copy
+
+[src/scripts/remember-me.ts](src/scripts/remember-me.ts) is a copy of ENgrid's `RememberMe` component (from `@4site/engrid-scripts` v0.28.5), started from `onLoad` in [src/index.ts](src/index.ts). It was copied into this project instead of changed in ENgrid because many clients use this component and we are close to the end-of-year code freeze, so a change to core is not an option right now. Once ENgrid core has an equivalent option, delete the copy and go back to the core component.
+
+The copy exists so that data saved on one subdomain (e.g. `give.stanthonysguild.org`) is available on the others (e.g. `join.stanthonysguild.org`). Core RememberMe writes a host-only cookie, which other subdomains can't read. Every change from the original is marked with `SAG:` in the file:
+
+- **Cookie saved on the site's domain.** The component finds the site's registrable domain (`join.stanthonysguild.org` becomes `stanthonysguild.org`) by writing a test cookie to each candidate, shortest first. Browsers refuse cookies on public suffixes such as `org` or `co.uk`, so the first candidate that keeps the cookie is the site's domain. The cookie is saved there (`.stanthonysguild.org`) instead of on the current subdomain, so every subdomain reads the same data.
+- **Core is skipped.** `RememberMe: true` in `src/index.ts` (instead of the options object) keeps ENgrid's other integrations seeing RememberMe as enabled, while `App` doesn't start the core component. The default tooltip text is also overridden through `window.EngridI18n`, because the default quotes a clear link that has no name on a first visit.
+
 ### Styles
 
 The order of the imports in [src/sass/main.scss](src/sass/main.scss) matters and differs from the engrid-template:
