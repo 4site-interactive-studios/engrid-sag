@@ -56,7 +56,7 @@ body:not(#en__pagebuilder) {
     margin-top: 0;
   }
 
-  .en__component--formblock .en__field.en__field--checkbox > label,
+  .en__component--formblock .en__field.en__field--checkbox > .en__field__label,
   #en__field_transaction_recurrpay {
     display: none;
   }
