@@ -17,8 +17,8 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, October 29, 2026 @ 08:20:52 ET
- *  By: rcw-01bssbpd8chab9ey8bquhah6
+ *  Date: Thursday, October 29, 2026 @ 11:09:43 ET
+ *  By: rcw-015crmhahsb5u1zmdcjxtfso
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
  *
@@ -27662,9 +27662,837 @@ const customScript = function (App) {
   }
   App.setBodyData("client-js-loading", "finished");
 };
+;// ./node_modules/@babel/runtime/helpers/esm/typeof.js
+function _typeof(o) {
+  "@babel/helpers - typeof";
+
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, _typeof(o);
+}
+
+;// ./node_modules/@babel/runtime/helpers/esm/toPrimitive.js
+
+function toPrimitive(t, e) {
+  if ("object" != _typeof(t) || !t) return t;
+  var r;
+  if ("undefined" != typeof Symbol && void 0 !== (r = t[Symbol.toPrimitive])) {
+    var i = r.call(t, e || "default");
+    if ("object" != _typeof(i)) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === e ? String : Number)(t);
+}
+
+;// ./node_modules/@babel/runtime/helpers/esm/toPropertyKey.js
+
+
+function toPropertyKey(t) {
+  var i = toPrimitive(t, "string");
+  return "symbol" == _typeof(i) ? i : i + "";
+}
+
+;// ./node_modules/@babel/runtime/helpers/esm/defineProperty.js
+
+function _defineProperty(e, r, t) {
+  return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[r] = t, e;
+}
+
+;// ./src/scripts/remember-me.ts
+
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+/**
+ * Saint Anthony's Guild copy of ENgrid's RememberMe
+ * (@4site/engrid-scripts v0.28.5, packages/scripts/src/remember-me.ts).
+ *
+ * Why a copy: the client needs saved data shared across subdomains
+ * (give.stanthonysguild.org -> join.stanthonysguild.org). Core RememberMe writes a
+ * host-only cookie, and changing core would affect every client, so the change lives
+ * here for now. Once ENgrid core has an equivalent option, delete this file and go
+ * back to the core component (see src/index.ts).
+ *
+ * Changes from the original are marked with "SAG:":
+ * - Imports point to the @4site/engrid-scripts package.
+ * - New `cookieDomain` option ("auto" by default): in local cookie mode the cookie is
+ *   written to the site's domain, so every subdomain reads the same data.
+ * - Reading drops an old host-only copy so it can't shadow the shared cookie, moving
+ *   its data to the domain when no shared copy exists yet.
+ */
+// SAG: imports from the package instead of relative paths
+;
+
+
+// localStorage key used to cache the per-device AES-GCM encryption key.
+// A random secret generated once per device and held in localStorage.
+const remember_me_RM_ENCRYPTION_KEY_STORAGE_NAME = "engrid-remember-me-key";
+class remember_me_RememberMe {
+  constructor(options) {
+    _defineProperty(this, "_form", EnForm.getInstance());
+    _defineProperty(this, "_events", RememberMeEvents.getInstance());
+    _defineProperty(this, "remoteUrl", void 0);
+    _defineProperty(this, "cookieName", void 0);
+    _defineProperty(this, "fieldNames", void 0);
+    _defineProperty(this, "fieldData", void 0);
+    _defineProperty(this, "cookieExpirationDays", void 0);
+    _defineProperty(this, "iframe", void 0);
+    _defineProperty(this, "rememberMeOptIn", void 0);
+    _defineProperty(this, "encryptData", void 0);
+    _defineProperty(this, "hide", void 0);
+    // SAG: domain the cookie is written to; null keeps it host-only (core behaviour)
+    _defineProperty(this, "cookieDomain", void 0);
+    _defineProperty(this, "fieldDonationAmountRadioName", void 0);
+    _defineProperty(this, "fieldDonationAmountOtherName", void 0);
+    _defineProperty(this, "fieldDonationRecurrPayRadioName", void 0);
+    _defineProperty(this, "fieldDonationAmountOtherCheckboxID", void 0);
+    _defineProperty(this, "fieldOptInSelectorTarget", void 0);
+    _defineProperty(this, "fieldOptInSelectorTargetLocation", void 0);
+    _defineProperty(this, "fieldClearSelectorTarget", void 0);
+    _defineProperty(this, "fieldClearSelectorTargetLocation", void 0);
+    _defineProperty(this, "fieldClearLabel", void 0);
+    _defineProperty(this, "rememberMeLabel", void 0);
+    this.iframe = null;
+    this.encryptData = options.encryptData ? options.encryptData : false;
+    this.hide = options.hide ? options.hide : false;
+    this.remoteUrl = options.remoteUrl ? options.remoteUrl : null;
+    this.cookieName = options.cookieName ? options.cookieName : "engrid-autofill";
+    this.cookieExpirationDays = options.cookieExpirationDays ? options.cookieExpirationDays : 365;
+    // SAG: must run after remoteUrl and encryptData are set
+    this.cookieDomain = this.resolveCookieDomain(options.cookieDomain);
+    this.rememberMeOptIn = options.checked ? options.checked : false;
+    this.fieldNames = options.fieldNames ? options.fieldNames : [];
+    this.fieldDonationAmountRadioName = options.fieldDonationAmountRadioName ? options.fieldDonationAmountRadioName : "transaction.donationAmt";
+    this.fieldDonationAmountOtherName = options.fieldDonationAmountOtherName ? options.fieldDonationAmountOtherName : "transaction.donationAmt.other";
+    this.fieldDonationRecurrPayRadioName = options.fieldDonationRecurrPayRadioName ? options.fieldDonationRecurrPayRadioName : "transaction.recurrpay";
+    this.fieldDonationAmountOtherCheckboxID = options.fieldDonationAmountOtherCheckboxID ? options.fieldDonationAmountOtherCheckboxID : "#en__field_transaction_donationAmt4";
+    this.fieldOptInSelectorTarget = options.fieldOptInSelectorTarget ? options.fieldOptInSelectorTarget : ".en__field--emailAddress.en__field";
+    this.fieldOptInSelectorTargetLocation = options.fieldOptInSelectorTargetLocation ? options.fieldOptInSelectorTargetLocation : "after";
+    this.fieldClearSelectorTarget = options.fieldClearSelectorTarget ? options.fieldClearSelectorTarget : 'label[for="en__field_supporter_firstName"]';
+    this.fieldClearSelectorTargetLocation = options.fieldClearSelectorTargetLocation ? options.fieldClearSelectorTargetLocation : "before";
+    this.fieldClearLabel = options.fieldClearLabel ? options.fieldClearLabel : engrid_ENGrid.t("rememberMe.clearLabel");
+    this.rememberMeLabel = options.rememberMeLabel ? options.rememberMeLabel : engrid_ENGrid.t("rememberMe.label");
+    this.fieldData = {};
+    if (this.useRemote()) {
+      this.createIframe(() => {
+        if (this.iframe && this.iframe.contentWindow) {
+          this.iframe.contentWindow.postMessage(JSON.stringify({
+            key: this.cookieName,
+            operation: "read",
+            encryptData: this.encryptData
+          }), "*");
+          this._form.onSubmit.subscribe(() => {
+            if (this.rememberMeOptIn) {
+              this.readFields();
+              this.saveCookieToRemote();
+            }
+          });
+        }
+      }, event => {
+        let data;
+        if (event.data && typeof event.data === "string" && this.isJson(event.data)) {
+          data = JSON.parse(event.data);
+        }
+        if (data && data.key && data.value !== undefined && data.key === this.cookieName) {
+          if (data.value !== null) {
+            this.updateFieldData(data.value);
+          }
+          this.writeFields();
+          let hasFieldData = Object.keys(this.fieldData).length > 0;
+          if (!hasFieldData) {
+            this.insertRememberMeOptin();
+          } else {
+            this.insertClearRememberMeLink();
+          }
+        }
+      });
+    } else if (this.encryptData) {
+      // Same flow as the unencrypted branch below, but the cookie payload is
+      // AES-GCM encrypted/decrypted (browser-native Web Crypto), so reading
+      // the cookie is asynchronous. A failed decrypt (foreign device or
+      // cleared localStorage) leaves fieldData empty and silently falls back
+      // to the standard, no-autofill experience.
+      this.readCookieEncrypted().then(() => {
+        let hasFieldData = Object.keys(this.fieldData).length > 0;
+        if (!hasFieldData) {
+          this.insertRememberMeOptin();
+        } else {
+          this.insertClearRememberMeLink();
+        }
+        this.writeFields();
+        this._form.onSubmit.subscribe(() => {
+          if (this.rememberMeOptIn) {
+            this.readFields();
+            this.saveCookieEncrypted();
+          }
+        });
+      });
+    } else {
+      this.readCookie();
+      let hasFieldData = Object.keys(this.fieldData).length > 0;
+      if (!hasFieldData) {
+        this.insertRememberMeOptin();
+      } else {
+        this.insertClearRememberMeLink();
+      }
+      this.writeFields();
+      this._form.onSubmit.subscribe(() => {
+        if (this.rememberMeOptIn) {
+          this.readFields();
+          this.saveCookie();
+        }
+      });
+    }
+  }
+  updateFieldData(jsonData) {
+    if (!jsonData) return;
+    let data;
+    try {
+      data = JSON.parse(jsonData);
+    } catch (e) {
+      // Payload is not valid JSON (e.g. corrupted or unexpected ciphertext).
+      // Fall back silently to the no-autofill experience.
+      return;
+    }
+    for (let i = 0; i < this.fieldNames.length; i++) {
+      if (data[this.fieldNames[i]] !== undefined) {
+        this.fieldData[this.fieldNames[i]] = decodeURIComponent(data[this.fieldNames[i]]);
+      }
+    }
+  }
+  insertClearRememberMeLink() {
+    let clearRememberMeField = document.getElementById("clear-autofill-data");
+    const {
+      html,
+      hasInnerLink
+    } = this.buildClearLabelMarkup();
+    if (!clearRememberMeField) {
+      clearRememberMeField = document.createElement(hasInnerLink ? "span" : "a");
+      clearRememberMeField.setAttribute("id", "clear-autofill-data");
+      if (hasInnerLink) {
+        clearRememberMeField.classList.add("clear-autofill-data-wrapper");
+      } else {
+        clearRememberMeField.classList.add("label-tooltip");
+        clearRememberMeField.setAttribute("style", "cursor: pointer;");
+      }
+      clearRememberMeField.innerHTML = html;
+      const targetField = this.getElementByFirstSelector(this.fieldClearSelectorTarget);
+      if (targetField) {
+        if (this.fieldClearSelectorTargetLocation === "rightSide") {
+          this.placeOnRightSide(targetField, clearRememberMeField);
+        } else if (this.fieldClearSelectorTargetLocation === "after") {
+          targetField.appendChild(clearRememberMeField);
+        } else {
+          targetField.prepend(clearRememberMeField);
+        }
+      }
+    }
+    const clickTarget = hasInnerLink ? clearRememberMeField.querySelector("#clear-autofill-data-link") ?? clearRememberMeField : clearRememberMeField;
+    const onClear = e => {
+      e.preventDefault();
+      this.clearFields(["supporter.country" /*, 'supporter.emailAddress'*/]);
+      if (this.useRemote()) {
+        this.clearCookieOnRemote();
+      } else if (this.encryptData) {
+        this.clearCookieEncrypted();
+      } else {
+        this.clearCookie();
+      }
+      let clearAutofillLink = document.getElementById("clear-autofill-data");
+      if (clearAutofillLink) {
+        clearAutofillLink.style.display = "none";
+      }
+      this.rememberMeOptIn = false;
+      this._events.dispatchClear();
+      window.dispatchEvent(new CustomEvent("RememberMe_Cleared"));
+    };
+    clickTarget.addEventListener("click", onClear);
+    this._events.dispatchLoad(true);
+    window.dispatchEvent(new CustomEvent("RememberMe_Loaded", {
+      detail: {
+        withData: true
+      }
+    }));
+  }
+  escapeHtml(value) {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+    return value.replace(/[&<>"']/g, c => map[c]);
+  }
+  buildClearLabelMarkup() {
+    const username = this.getUsernameFromFieldData();
+    const label = username ? this.fieldClearLabel.replace(/\$username/g, () => this.escapeHtml(username)) : this.fieldClearLabel.replace(/[^\S\r\n]?\$username/g, "");
+
+    // Only the first non-empty {...} segment becomes the clickable clear link.
+    // Any additional {...} segments remain as literal text (braces included),
+    // and empty {} braces are left as-is. When no non-empty braces are present,
+    // the entire element is clickable (legacy behaviour).
+    const match = label.match(/\{([^}]+)\}/);
+    if (!match) {
+      return {
+        html: label,
+        hasInnerLink: false
+      };
+    }
+    const before = label.slice(0, match.index);
+    const linkText = match[1];
+    const after = label.slice((match.index ?? 0) + match[0].length);
+    const html = before + `<a id="clear-autofill-data-link" class="label-tooltip" style="cursor: pointer;">${linkText}</a>` + after;
+    return {
+      html,
+      hasInnerLink: true
+    };
+  }
+  getUsernameFromFieldData() {
+    const value = this.fieldData["supporter.firstName"];
+    return value ? value.trim() : "";
+  }
+  getClearLabelPlainText() {
+    const username = this.getUsernameFromFieldData();
+    const label = username ? this.fieldClearLabel.replace(/\$username/g, () => username) : this.fieldClearLabel.replace(/[^\S\r\n]?\$username/g, "");
+    return label.replace(/\{([^}]*)\}/g, "$1");
+  }
+  getElementByFirstSelector(selectorsString) {
+    // iterate through the selectors until we find one that exists
+    let targetField = null;
+    const selectorTargets = selectorsString.split(",");
+    for (let i = 0; i < selectorTargets.length; i++) {
+      targetField = document.querySelector(selectorTargets[i]);
+      if (targetField) {
+        break;
+      }
+    }
+    return targetField;
+  }
+  placeOnRightSide(targetField, elementToPlace) {
+    const wrapperClass = "rememberme-right-side-wrapper";
+    let wrapper;
+    if (targetField.parentElement && targetField.parentElement.classList.contains(wrapperClass)) {
+      wrapper = targetField.parentElement;
+    } else {
+      // Read the target's computed styles BEFORE moving it into the flex
+      // wrapper. Once inside a flex container, margin collapsing no longer
+      // applies and the reported values can change. We transfer the original
+      // margin-top to the wrapper itself so the block retains its vertical
+      // spacing in the document flow, and zero out the target's own margin-top
+      // so it doesn't double-apply inside the flex row.
+      const targetStyle = window.getComputedStyle(targetField);
+      const targetMarginTop = targetStyle.marginTop;
+      const targetMarginBottom = targetStyle.marginBottom;
+      wrapper = document.createElement("div");
+      wrapper.classList.add(wrapperClass);
+      wrapper.style.display = "flex";
+      wrapper.style.alignItems = "center";
+      wrapper.style.gap = "8px";
+      wrapper.style.flexWrap = "wrap";
+      // Transfer vertical margins from the target to the wrapper so the
+      // surrounding layout is unchanged after the DOM move.
+      wrapper.style.marginTop = targetMarginTop;
+      wrapper.style.marginBottom = targetMarginBottom;
+      if (targetField.parentNode) {
+        targetField.parentNode.insertBefore(wrapper, targetField);
+      }
+
+      // Zero out the target's own margin-top/-bottom now that the wrapper
+      // owns them, so they don't double-apply inside the flex row.
+      targetField.style.marginTop = "0px";
+      targetField.style.marginBottom = "0px";
+      wrapper.appendChild(targetField);
+    }
+
+    // Read padding-left AFTER the wrapper exists but before any alignment
+    // logic, so it reflects the current computed value.
+    const targetPaddingLeft = window.getComputedStyle(targetField).paddingLeft;
+    wrapper.appendChild(elementToPlace);
+    const applyAlignment = () => {
+      const wrapped = elementToPlace.offsetTop > targetField.offsetTop;
+      if (wrapped) {
+        // When wrapped below, left-align with the target's content area.
+        elementToPlace.style.marginTop = "0px";
+        elementToPlace.style.marginLeft = targetPaddingLeft;
+      } else {
+        // When side-by-side, both items are already vertically centred by the
+        // flex container — no extra margin-top needed on elementToPlace.
+        elementToPlace.style.marginTop = "0px";
+        elementToPlace.style.marginLeft = "0px";
+      }
+    };
+
+    // Defer the first alignment check to the next animation frame so the
+    // browser has had a chance to perform layout. Without this, offsetTop on
+    // both elements is still 0 (or stale) at call time.
+    requestAnimationFrame(applyAlignment);
+
+    // SAG: the theme's TypeScript (3.9) has no ResizeObserver type, hence the cast
+    const ResizeObserverCtor = window.ResizeObserver;
+    if (typeof ResizeObserverCtor === "function") {
+      const observer = new ResizeObserverCtor(() => applyAlignment());
+      observer.observe(wrapper);
+    }
+  }
+  insertRememberMeOptin() {
+    let rememberMeOptInField = document.getElementById("remember-me-opt-in");
+    if (!rememberMeOptInField) {
+      const rememberMeLabel = this.rememberMeLabel;
+      const rememberMeInfo = engrid_ENGrid.t("rememberMe.tooltip", {
+        label: rememberMeLabel,
+        clearLabel: this.getClearLabelPlainText()
+      });
+      const rememberMeOptInFieldChecked = this.rememberMeOptIn ? "checked" : "";
+      const rememberMeOptInField = document.createElement("div");
+      rememberMeOptInField.classList.add("en__field", "en__field--checkbox", "en__field--question", "rememberme-wrapper");
+      rememberMeOptInField.setAttribute("id", "remember-me-opt-in");
+      rememberMeOptInField.setAttribute("style", "overflow-x: hidden;");
+      rememberMeOptInField.innerHTML = `
+        <div class="en__field__element en__field__element--checkbox">
+          <div class="en__field__item">
+            <input id="remember-me-checkbox" type="checkbox" class="en__field__input en__field__input--checkbox" ${rememberMeOptInFieldChecked} />
+            <label for="remember-me-checkbox" class="en__field__label en__field__label--item" style="white-space: nowrap;">
+              <div class="rememberme-content" style="display: inline-flex; align-items: center;">
+                ${rememberMeLabel}
+                <a id="rememberme-learn-more-toggle" style="display: inline-block; display: inline-flex; align-items: center; cursor: pointer; margin-left: 10px; margin-top: var(--rememberme-learn-more-toggle_margin-top)">
+                  <svg style="height: 14px; width: auto; z-index: 1;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H9V5H11V7ZM11 9H9V15H11V9ZM10 2C5.59 2 2 5.59 2 10C2 14.41 5.59 18 10 18C14.41 18 18 14.41 18 10C18 5.59 14.41 2 10 2ZM10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0Z" fill="currentColor"/></svg>
+                </a>
+              </div>
+            </label>
+          </div>
+        </div>
+			`;
+      const targetField = this.getElementByFirstSelector(this.fieldOptInSelectorTarget);
+      if (targetField && targetField.parentNode) {
+        if (this.fieldOptInSelectorTargetLocation === "rightSide") {
+          this.placeOnRightSide(targetField, rememberMeOptInField);
+        } else {
+          targetField.parentNode.insertBefore(rememberMeOptInField, this.fieldOptInSelectorTargetLocation == "before" ? targetField : targetField.nextSibling);
+        }
+        const rememberMeCheckbox = document.getElementById("remember-me-checkbox");
+        if (rememberMeCheckbox) {
+          rememberMeCheckbox.addEventListener("change", () => {
+            if (rememberMeCheckbox.checked) {
+              this.rememberMeOptIn = true;
+            } else {
+              this.rememberMeOptIn = false;
+            }
+          });
+        }
+        if (this.hide) {
+          rememberMeOptInField.classList.add("hide");
+        }
+        ;(0,tippy_esm_namespaceFn().Ay)("#rememberme-learn-more-toggle", {
+          content: rememberMeInfo
+        });
+      }
+    } else if (this.rememberMeOptIn) {
+      rememberMeOptInField.checked = true;
+    }
+    this._events.dispatchLoad(false);
+    window.dispatchEvent(new CustomEvent("RememberMe_Loaded", {
+      detail: {
+        withData: false
+      }
+    }));
+  }
+  useRemote() {
+    return !!this.remoteUrl && typeof window.postMessage === "function" && window.JSON && window.localStorage;
+  }
+  createIframe(iframeLoaded, messageReceived) {
+    if (this.remoteUrl) {
+      let iframe = document.createElement("iframe");
+      iframe.style.cssText = "position:absolute;width:1px;height:1px;left:-9999px;";
+      iframe.src = this.remoteUrl;
+      iframe.setAttribute("sandbox", "allow-same-origin allow-scripts");
+      iframe.setAttribute("title", engrid_ENGrid.t("rememberMe.iframeTitle"));
+      this.iframe = iframe;
+      document.body.appendChild(this.iframe);
+      this.iframe.addEventListener("load", () => iframeLoaded(), false);
+      window.addEventListener("message", event => {
+        if (this.iframe?.contentWindow === event.source) {
+          messageReceived(event);
+        }
+      }, false);
+    }
+  }
+  clearCookie() {
+    this.fieldData = {};
+    this.saveCookie();
+  }
+  clearCookieOnRemote() {
+    this.fieldData = {};
+    this.saveCookieToRemote();
+  }
+  saveCookieToRemote() {
+    if (this.iframe && this.iframe.contentWindow) {
+      this.iframe.contentWindow.postMessage(JSON.stringify({
+        key: this.cookieName,
+        value: this.fieldData,
+        operation: "write",
+        expires: this.cookieExpirationDays,
+        encryptData: this.encryptData
+      }), "*");
+    }
+  }
+  readCookie() {
+    // SAG: was cookie.get(this.cookieName)
+    this.updateFieldData(this.getStoredCookie() || "");
+  }
+  saveCookie() {
+    // SAG: was cookie.set(this.cookieName, ..., { expires })
+    this.setStoredCookie(JSON.stringify(this.fieldData));
+  }
+  // SAG: Engaging Networks serves many clients' pages from these domains. A cookie
+  // shared across them would show one client's supporter data on another client's
+  // pages (many clients use the default cookie name), so here it stays host-only.
+
+  // SAG
+  resolveCookieDomain(option) {
+    if (option === false) {
+      return null;
+    }
+    // Remote mode keeps the data on the iframe's domain. Encrypted local mode keeps
+    // its key in this origin's localStorage, so other subdomains couldn't decrypt a
+    // shared cookie and would overwrite it with data encrypted with their own key.
+    if (this.useRemote() || this.encryptData) {
+      return null;
+    }
+    if (option && option !== "auto") {
+      return option;
+    }
+    return remember_me_RememberMe.detectSiteDomain();
+  }
+  // SAG: finds the site's registrable domain (join.stanthonysguild.org ->
+  // stanthonysguild.org) by writing a test cookie to each candidate, shortest first.
+  // Browsers refuse cookies on public suffixes (org, co.uk...), so the first
+  // candidate that keeps the cookie is the site's domain.
+  static detectSiteDomain() {
+    const host = window.location.hostname.toLowerCase();
+    // localhost and IP addresses can't share cookies with other hosts
+    if (!host.includes(".") || /^[\d.]+$/.test(host) || host.includes(":")) {
+      return null;
+    }
+    const labels = host.split(".");
+    const testName = "engrid-remember-me-domain-test";
+    const testValue = String(Math.random()).slice(2);
+    for (let i = labels.length - 2; i >= 0; i--) {
+      const candidate = labels.slice(i).join(".");
+      set(testName, testValue, {
+        domain: candidate
+      });
+      const accepted = cookie_get(testName) === testValue;
+      cookie_remove(testName, {
+        domain: candidate
+      });
+      if (accepted) {
+        return remember_me_RememberMe.SHARED_PLATFORM_DOMAINS.indexOf(candidate) > -1 ? null : candidate;
+      }
+    }
+    return null;
+  }
+  // SAG: with a cookie domain, an old host-only copy (written by core RememberMe)
+  // can coexist with the shared one, and cookie.get returns whichever comes last in
+  // document.cookie. Remove the host-only copy: if a shared copy remains, it wins;
+  // if not, the host-only data moves to the domain.
+  getStoredCookie() {
+    const value = cookie_get(this.cookieName);
+    if (!this.cookieDomain || value === undefined) {
+      return value;
+    }
+    cookie_remove(this.cookieName);
+    const sharedValue = cookie_get(this.cookieName);
+    if (sharedValue !== undefined) {
+      return sharedValue;
+    }
+    this.setStoredCookie(value);
+    return value;
+  }
+  // SAG
+  setStoredCookie(value) {
+    if (this.cookieDomain) {
+      // Drop the host-only copy so it can't shadow the shared one
+      cookie_remove(this.cookieName);
+    }
+    set(this.cookieName, value, _objectSpread({
+      expires: this.cookieExpirationDays
+    }, this.cookieDomain ? {
+      domain: this.cookieDomain
+    } : {}));
+  }
+  /**
+   * Reads and decrypts the local (non-remote) Remember Me cookie using
+   * browser-native AES-GCM (Web Crypto), with the key held in localStorage
+   * on this device. If the key is absent (different device or cleared
+   * storage) or decryption otherwise fails, the field data is left empty
+   * and the component falls back to the normal, no-autofill experience.
+   */
+  async readCookieEncrypted() {
+    // SAG: was cookie.get(this.cookieName)
+    const raw = this.getStoredCookie();
+    if (!raw) {
+      return;
+    }
+    const decrypted = await this.decryptPayload(raw);
+    if (decrypted) {
+      this.updateFieldData(decrypted);
+    }
+  }
+  /**
+   * Encrypts the current fieldData with AES-GCM (Web Crypto) and stores the
+   * base64-encoded result in the local cookie. If encryption isn't possible
+   * (e.g. Web Crypto unavailable), nothing is written.
+   */
+  async saveCookieEncrypted() {
+    const encrypted = await this.encryptPayload(JSON.stringify(this.fieldData));
+    if (encrypted) {
+      // SAG: was cookie.set(this.cookieName, encrypted, { expires })
+      this.setStoredCookie(encrypted);
+    }
+  }
+  clearCookieEncrypted() {
+    this.fieldData = {};
+    this.saveCookieEncrypted();
+  }
+  /**
+   * Retrieves the per-device AES-GCM encryption key. A random secret
+   * generated once per device and held in localStorage — never written
+   * to the cookie, so it never travels with the transported value.
+   */
+  async getEncryptionKey() {
+    if (!window.crypto || !window.crypto.subtle) {
+      return null;
+    }
+    const storedKey = window.localStorage.getItem(remember_me_RM_ENCRYPTION_KEY_STORAGE_NAME);
+    if (storedKey) {
+      try {
+        return await window.crypto.subtle.importKey("raw", this.base64ToArrayBuffer(storedKey), {
+          name: "AES-GCM",
+          length: 256
+        }, false, ["encrypt", "decrypt"]);
+      } catch (e) {
+        return null;
+      }
+    }
+    try {
+      const key = await window.crypto.subtle.generateKey({
+        name: "AES-GCM",
+        length: 256
+      }, true, ["encrypt", "decrypt"]);
+      const exported = await window.crypto.subtle.exportKey("raw", key);
+      window.localStorage.setItem(remember_me_RM_ENCRYPTION_KEY_STORAGE_NAME, this.arrayBufferToBase64(exported));
+      return key;
+    } catch (e) {
+      return null;
+    }
+  }
+  /**
+   * Encrypts a plaintext string with AES-GCM and returns the base64-encoded
+   * IV + ciphertext, ready for storage. Returns null if a key isn't
+   * available (e.g. Web Crypto unsupported).
+   */
+  async encryptPayload(plaintext) {
+    const key = await this.getEncryptionKey();
+    if (!key) {
+      return null;
+    }
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const ciphertext = await window.crypto.subtle.encrypt({
+      name: "AES-GCM",
+      iv
+    }, key, new TextEncoder().encode(plaintext));
+    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(ciphertext), iv.length);
+    return this.arrayBufferToBase64(combined);
+  }
+  /**
+   * Decrypts a base64-encoded IV + ciphertext payload previously produced by
+   * encryptPayload. Returns null (rather than throwing) if the key is
+   * missing or decryption otherwise fails, so callers can gracefully fall
+   * back to the standard, no-autofill experience.
+   */
+  async decryptPayload(encryptedBase64) {
+    const key = await this.getEncryptionKey();
+    if (!key) {
+      return null;
+    }
+    let combined;
+    try {
+      combined = new Uint8Array(this.base64ToArrayBuffer(encryptedBase64));
+    } catch (e) {
+      return null;
+    }
+    if (combined.length < 13) {
+      return null;
+    }
+    const iv = combined.slice(0, 12);
+    const ciphertext = combined.slice(12);
+    try {
+      const decrypted = await window.crypto.subtle.decrypt({
+        name: "AES-GCM",
+        iv
+      }, key, ciphertext);
+      return new TextDecoder().decode(decrypted);
+    } catch (e) {
+      return null;
+    }
+  }
+  arrayBufferToBase64(buffer) {
+    let binary = "";
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
+  base64ToArrayBuffer(base64) {
+    const binary = window.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+  readFields() {
+    for (let i = 0; i < this.fieldNames.length; i++) {
+      let fieldSelector = "[name='" + this.fieldNames[i] + "']";
+      let field = document.querySelector(fieldSelector);
+      if (field) {
+        if (field.tagName === "INPUT") {
+          let type = field.getAttribute("type");
+          if (type === "radio" || type === "checkbox") {
+            field = document.querySelector(fieldSelector + ":checked");
+          }
+          this.fieldData[this.fieldNames[i]] = encodeURIComponent(field.value);
+        } else if (field.tagName === "SELECT") {
+          this.fieldData[this.fieldNames[i]] = encodeURIComponent(field.value);
+        }
+      }
+    }
+  }
+  setFieldValue(field, value, overwrite = false) {
+    value = decodeURIComponent(value || "");
+    if (field && value !== undefined) {
+      if ("type" in field) {
+        switch (field.type) {
+          case "select-one":
+          case "select-multiple":
+            {
+              const selectField = field;
+              for (const option of Array.from(selectField.options)) {
+                if (option.value === value) {
+                  if (selectField.value && overwrite || !selectField.value) {
+                    option.selected = true;
+                    selectField.dispatchEvent(new Event("change", {
+                      bubbles: true
+                    }));
+                  }
+                  break;
+                }
+              }
+              break;
+            }
+          case "checkbox":
+          case "radio":
+            {
+              const inputField = field;
+              if (inputField.value === value) {
+                inputField.checked = true;
+                inputField.dispatchEvent(new Event("change", {
+                  bubbles: true
+                }));
+              }
+              break;
+            }
+          case "textarea":
+          case "text":
+          default:
+            if (field.value && overwrite || !field.value) {
+              field.value = value;
+              field.dispatchEvent(new Event("change", {
+                bubbles: true
+              }));
+              field.dispatchEvent(new Event("blur", {
+                bubbles: true
+              }));
+            }
+        }
+      }
+    }
+  }
+  clearFields(skipFields) {
+    for (let key in this.fieldData) {
+      if (skipFields.includes(key)) {
+        delete this.fieldData[key];
+      } else if (this.fieldData[key] === "") {
+        delete this.fieldData[key];
+      } else {
+        this.fieldData[key] = "";
+      }
+    }
+    this.writeFields(true);
+  }
+  /**
+   * Writes the values from the fieldData object to the corresponding HTML input fields.
+   *
+   * This function iterates over the fieldNames array and for each field name, it selects the corresponding HTML input field.
+   * If the field is found and its tag name is "INPUT", it checks if the field name matches certain conditions (like being a donation recurring payment radio button or a donation amount radio button).
+   * Depending on these conditions, it either clicks the field or sets its value using the setFieldValue function.
+   * If the field tag name is "SELECT", it sets its value using the setFieldValue function.
+   *
+   * @param overwrite - A boolean indicating whether to overwrite the existing value of the fields. Defaults to false.
+   */
+  writeFields(overwrite = false) {
+    for (let i = 0; i < this.fieldNames.length; i++) {
+      let fieldSelector = "[name='" + this.fieldNames[i] + "']";
+      let field = document.querySelector(fieldSelector);
+      if (field) {
+        if (field.tagName === "INPUT") {
+          if (this.fieldNames[i] === this.fieldDonationRecurrPayRadioName) {
+            if (this.fieldData[this.fieldNames[i]] === "Y") {
+              field.click();
+            }
+          } else if (this.fieldDonationAmountRadioName === this.fieldNames[i]) {
+            field = document.querySelector(fieldSelector + "[value='" + this.fieldData[this.fieldNames[i]] + "']");
+            if (field) {
+              field.click();
+            } else {
+              field = document.querySelector("input[name='" + this.fieldDonationAmountOtherName + "']");
+              this.setFieldValue(field, this.fieldData[this.fieldNames[i]], true);
+            }
+          } else {
+            this.setFieldValue(field, this.fieldData[this.fieldNames[i]], overwrite);
+          }
+        } else if (field.tagName === "SELECT") {
+          this.setFieldValue(field, this.fieldData[this.fieldNames[i]], true);
+        }
+      }
+    }
+  }
+  isJson(str) {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+}
+
+// SAG: options type for src/index.ts
+_defineProperty(remember_me_RememberMe, "SHARED_PLATFORM_DOMAINS", ["e-activist.com", "engagingnetworks.app", "engagingnetworks.net"]);
 ;// ./src/index.ts
  // Uses ENGrid via NPM
 // import { Options, App } from "../../engrid/packages/scripts"; // Uses ENGrid via Visual Studio Workspace
+
 
 
 
@@ -27674,6 +28502,33 @@ window.EngridI18n = {
   en: {
     "rememberMe.tooltip": "Check “{label}” to complete forms on this device faster. While your financial information won’t be stored, you should only check this box from a personal device. Use the “Not [your name]?” link to remove the information from your device at any time."
   }
+};
+
+// Saint Anthony's Guild runs its own copy of RememberMe (src/scripts/remember-me.ts)
+// so data saved on one subdomain (give.) is available on the others (join.).
+const rememberMeOptions = {
+  cookieName: "sag-remember-me",
+  cookieExpirationDays: 365,
+  checked: true,
+  hide: false,
+  fieldOptInSelectorTarget: "div.en__field--NOT_TAGGED_42, div.en__field--phoneNumber, div.en__field--postcode, div.en__field--emailAddress, div.en__field--lastName",
+  fieldOptInSelectorTargetLocation: "after",
+  fieldClearSelectorTarget: "div.en__field--firstName div, div.en__field--emailAddress div",
+  fieldClearSelectorTargetLocation: "after",
+  fieldNames: ["supporter.firstName", "supporter.lastName", "supporter.title", "supporter.emailAddress", "supporter.address1", "supporter.city", "supporter.country", "supporter.region", "supporter.postcode", "supporter.phoneNumber", "supporter.NOT_TAGGED_42" // Phone field on the main donation page
+  ],
+  fieldClearLabel: "{Not $username?}",
+  // Write the cookie to the site's domain (stanthonysguild.org, etc.)
+  cookieDomain: "auto"
+};
+
+// Same guard as ENgrid's App: accessing localStorage throws when storage is blocked
+const startRememberMe = () => {
+  try {
+    if (window.localStorage) {
+      new remember_me_RememberMe(rememberMeOptions);
+    }
+  } catch (e) {}
 };
 const src_options = {
   applePay: false,
@@ -27691,21 +28546,16 @@ const src_options = {
     "textarea#en__field_transaction_comments": "Your personal message",
     "input#en__field_supporter_bankAccountNumber": "Account Number"
   },
-  RememberMe: {
-    cookieName: "sag-remember-me",
-    cookieExpirationDays: 365,
-    checked: true,
-    hide: false,
-    fieldOptInSelectorTarget: "div.en__field--NOT_TAGGED_42, div.en__field--phoneNumber, div.en__field--postcode, div.en__field--emailAddress, div.en__field--lastName",
-    fieldOptInSelectorTargetLocation: "after",
-    fieldClearSelectorTarget: "div.en__field--firstName div, div.en__field--emailAddress div",
-    fieldClearSelectorTargetLocation: "after",
-    fieldNames: ["supporter.firstName", "supporter.lastName", "supporter.title", "supporter.emailAddress", "supporter.address1", "supporter.city", "supporter.country", "supporter.region", "supporter.postcode", "supporter.phoneNumber", "supporter.NOT_TAGGED_42" // Phone field on the main donation page
-    ],
-    fieldClearLabel: "{Not $username?}"
-  },
+  // `true` instead of the options object: ENgrid's integrations that check this option
+  // (DataLayer, FastFormFill, WelcomeBack, StickyPrepopulation) still see RememberMe as
+  // enabled, but App only creates the core component for an object, so it skips it.
+  // The SAG copy is started in onLoad below.
+  RememberMe: true,
   Debug: App.getUrlParameter("debug") == "true" ? true : false,
-  onLoad: () => customScript(App),
+  onLoad: () => {
+    startRememberMe();
+    customScript(App);
+  },
   onResize: () => console.log("Starter Theme Window Resized")
 };
 new App(src_options);
