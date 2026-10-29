@@ -183,6 +183,13 @@ body:not(#en__pagebuilder) {
     line-height: inherit;
   }
 
+  h4,
+  h5,
+  h6 {
+    margin-top: calc(2rem * var(--scale-down_80pct));
+    margin-bottom: calc(1rem * var(--scale-down_80pct));
+  }
+
   /*
     * ##########################################################
     * # CONTENT HEADER
