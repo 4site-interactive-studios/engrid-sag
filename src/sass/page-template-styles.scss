@@ -56,7 +56,7 @@ body:not(#en__pagebuilder) {
     margin-top: 0;
   }
 
-  .en__component--formblock .en__field.en__field--checkbox > label,
+  .en__component--formblock .en__field.en__field--checkbox > .en__field__label,
   #en__field_transaction_recurrpay {
     display: none;
   }
@@ -65,17 +65,23 @@ body:not(#en__pagebuilder) {
     box-shadow: none;
   }
 
+  // ENgrid 0.28 draws the box and the check mark in ::before, inline before the label text.
+  // The old theme used an absolute ::before (box) + ::after (check) and 42px of label padding.
   .en__field__input--checkbox + .en__field__label:before {
     height: 2rem;
     width: 2rem;
     top: 0;
     left: 0;
-  }
-  .en__field__input--checkbox:checked + .en__field__label::after {
-    left: 7px;
-    top: 7px;
-    font-size: 20px;
+    margin-right: 10px; // text 42px from the left edge, as before
+    font-size: 20px; // check mark size and weight from the old ::after
     font-weight: 700;
+  }
+
+  // The old check mark lived in ::after. A code block on the EN pages still sets
+  // ".en__field__input--checkbox:checked + .en__field__label::after { content: "✓" }",
+  // which would now draw a second check after the label text.
+  .en__field__input--checkbox:checked + .en__field__label::after {
+    content: none;
   }
 
   label.en__field__label.en__field__label--item {
@@ -107,9 +113,15 @@ body:not(#en__pagebuilder) {
   //   font-weight: 700;
   // }
 
+  // ENgrid 0.28 has no CSS Custom Properties for these; values from the old theme
+  .en__submit button {
+    font-weight: 900;
+    line-height: 1;
+  }
+
   input::placeholder,
   select {
-    color: var(--theme-typography-input-placeholder-color);
+    color: var(--input_placeholder-color);
   }
 
   input.en__field__input--checkbox:checked
@@ -117,7 +129,7 @@ body:not(#en__pagebuilder) {
   input.en__field__input--checkbox
     + label.en__field__label.en__field__label--item {
     font-weight: 500;
-    font-family: var(--theme-typography-default-font-family);
+    font-family: var(--default_font-family);
     text-transform: none;
     border: 0px;
     // padding: 3px 10px 0;
@@ -129,7 +141,7 @@ body:not(#en__pagebuilder) {
     display: inline-flex;
     align-items: center;
     min-height: 2rem;
-    padding: 0 0 0 42px;
+    padding: 0; // was 0 0 0 42px, for the old absolute checkbox
     margin-left: 0px;
   }
 
@@ -169,6 +181,13 @@ body:not(#en__pagebuilder) {
     font-size: inherit;
     font-weight: inherit;
     line-height: inherit;
+  }
+
+  h4,
+  h5,
+  h6 {
+    margin-top: calc(2rem * var(--scale-down_80pct));
+    margin-bottom: calc(1rem * var(--scale-down_80pct));
   }
 
   /*
@@ -231,7 +250,7 @@ body:not(#en__pagebuilder) {
     * ##########################################################
     */
   .content-footer {
-    --theme-typography-p-color: #ffffff;
+    --p_color: #ffffff;
     padding: 1rem;
     display: flex;
     justify-content: center;
@@ -240,6 +259,7 @@ body:not(#en__pagebuilder) {
     > div {
       max-width: 600px;
       text-align: center;
+      justify-self: center; // ENgrid 0.28 turns .content-footer into a grid, so the flex centering above no longer applies
     }
   }
 
@@ -268,7 +288,7 @@ body:not(#en__pagebuilder) {
         }
         a {
           font-weight: 400;
-          font-family: var(--theme-typography-default-font-family);
+          font-family: var(--default_font-family);
           font-size: 14px;
         }
       }
@@ -335,7 +355,7 @@ body:not(#en__pagebuilder) {
       overflow: inherit;
 
       .enWidget__fill {
-        background-color: var(--theme-cta) !important; // !important required
+        background-color: var(--color_cta) !important; // !important required
         box-shadow: inset -13px 0px 0px 0px rgba(255, 255, 255, 1);
         &::before {
           content: " ";
@@ -389,17 +409,17 @@ body:not(#en__pagebuilder) {
     .en__field__item
       input:checked
       + label.en__field__label.en__field__label--item {
-      background-color: var(--theme-typography-primary-button-background-color);
-      color: var(--theme-typography-primary-button-color);
-      border-color: var(--theme-typography-primary-button-background-color);
+      background-color: var(--primary-button_background-color);
+      color: var(--primary-button_color);
+      border-color: var(--primary-button_background-color);
       &:hover {
-        color: var(--theme-typography-primary-button-color);
+        color: var(--primary-button_color);
       }
     }
   }
 
   .en__field--donationAmt .en__field__element--radio {
-    width: 100%;
+    width: auto; // was 100%: with the ENgrid 0.28 negative field margins it left the row 16px short
   }
 
   .en__component.en__component--copyblock.recurring-frequency-y-hide.inline-monthly-upsell {
@@ -445,9 +465,10 @@ body:not(#en__pagebuilder) {
   .en__field--donationAmt div.en__field__item.en__field__item--other {
     flex-basis: calc((100% * (2 / 3)) - 1rem);
     max-width: calc(100% * (2 / 3));
+    position: relative; // anchors the "$" (::before) to the Other field
     input {
       padding-left: 1.75rem;
-      border-color: var(--theme-typography-input-border-color);
+      border-color: var(--input_border-color);
       padding-top: 12px;
       padding-bottom: 12px;
       outline-width: 0;
@@ -455,10 +476,19 @@ body:not(#en__pagebuilder) {
       &:hover,
       &:focus::after {
         border-bottom-color: var(
-          --theme-typography-input-focus-hover-border-bottom-color
+          --input_border-bottom-color_hover
         );
       }
     }
+  }
+
+  // ENgrid 0.28 sizes every amount with --donation-amount__button_count (0-5-0 specificity);
+  // keep "Other" at two thirds of the row, as in the old theme
+  .radio-to-buttons_donationAmt
+    .en__field--donationAmt.en__field--radio
+    > .en__field__element
+    .en__field__item--other {
+    flex-basis: calc(100% * (2 / 3));
   }
 
   .en__field--donationAmt .en__field__item--other::before {
@@ -470,12 +500,38 @@ body:not(#en__pagebuilder) {
     font-weight: 700;
     line-height: 0;
     height: 0;
-    left: 1rem;
-    top: 50%;
+    left: calc(1rem + var(--fields_spacing-inline)); // the item now has --fields_spacing-inline of padding
+    top: calc((100% - var(--fields_spacing-block)) / 2); // center on the input; the item has --fields_spacing-block below it
+  }
+
+  // The amount buttons have no border (--donation-amount__button_border-width: 0), but
+  // ENgrid 0.28 applies that width to the "Other" input too
+  .radio-to-buttons_donationAmt
+    .en__field--donationAmt.en__field--radio
+    > .en__field__element
+    .en__field__input--other {
+    border-width: var(--input_border-width);
+  }
+
+  // When "Other" is selected (.en__field--withOther--active), ENgrid 0.28 paints the input
+  // with the checked button colors (CTA background, white text). The old theme kept it
+  // looking like a regular input.
+  .radio-to-buttons_donationAmt
+    .en__field--donationAmt.en__field--radio.en__field--withOther--active
+    .en__field__item
+    .en__field__input--other {
+    color: var(--input_color);
+    background-color: var(--input_background-color);
+    border-color: var(--input_border-color);
+
+    &:hover,
+    &:focus {
+      border-color: var(--input_border-color_hover);
+    }
   }
 
   .en__field--recurrfreq {
-    padding-right: 0;
+    // padding-right: 0; // removed: ENgrid 0.28 pads fields on both sides, this pushed the row 8px past the inputs
     .en__field__item {
       max-width: calc(100% / 3);
       // margin-right: 0px;
@@ -484,24 +540,178 @@ body:not(#en__pagebuilder) {
 
   /*
     * ##########################################################
+    * # FORM SPACING
+    * ##########################################################
+    */
+
+  // ENgrid 0.28 spaces fields with --fields_spacing-block/inline (0.5rem) and labels
+  // without padding, which makes the form ~8px tighter per row. The old ENgrid used
+  // .375rem of vertical padding on labels, 1rem below each field and 0.5rem below each
+  // radio/checkbox item. These rules restore that rhythm.
+  .en__component--formblock .en__field {
+    > .en__field__label:not(.en__field__label--item) {
+      padding-top: 0.375rem;
+      padding-bottom: 0.375rem;
+    }
+
+    .en__field__element {
+      > input,
+      > select,
+      > textarea,
+      > .en__field__input--vgs {
+        margin-top: 0; // was calc(var(--fields_spacing-inline) * 0.5); the label padding covers it
+      }
+    }
+
+    // Radio, checkbox and split/triple items (e.g. the MM / YYYY expiration selects):
+    // no space above, --fields_spacing-block (0.5rem) below. Without this, split selects sit
+    // 4px lower than a plain input next to them (CVV beside the expiration date).
+    .en__field__element--radio .en__field__item,
+    .en__field__element--checkbox .en__field__item,
+    .en__field__element--splitselect .en__field__item,
+    .en__field__element--splittext .en__field__item,
+    .en__field__element--tripleselect .en__field__item,
+    .en__field__element--tripletext .en__field__item {
+      padding-top: 0;
+    }
+
+    // ...plus 1rem below the field (input fields get 0.5rem from the input and 0.5rem here)
+    &.en__field--radio,
+    &.en__field--checkbox {
+      margin-bottom: 1rem;
+    }
+  }
+
+  /*
+    * ##########################################################
+    * # QUESTION RADIOS (e.g. opt-in "Would you like to receive updates…")
+    * ##########################################################
+    */
+
+  // ENgrid 0.28 stacks EN "question" radios (grid, width: fit-content) and draws the circle
+  // inline before the text. The old theme showed the options side by side, the circle at the
+  // left edge of each option and the text centered in the rest of it.
+  .en__field.en__field--radio.en__field--question {
+    .en__field__element {
+      display: flex;
+      flex-wrap: wrap;
+      width: auto;
+      margin-bottom: 0;
+    }
+
+    .en__field__item {
+      display: flex;
+      flex: 1 1 auto;
+      align-items: center;
+    }
+
+    input[type="radio"] + label.en__field__label--item {
+      position: relative;
+      display: block;
+      flex: 1 1 auto; // fill the option, so the text is centered in it
+      width: auto;
+      margin-left: 32px;
+
+      &:before {
+        position: absolute;
+        left: -32px;
+        top: 5px;
+        margin-right: 0;
+      }
+    }
+  }
+
+  /*
+    * ##########################################################
+    * # ERRORS: COMPOUND FIELDS
+    * ##########################################################
+    */
+
+  // ENgrid 0.28 no longer frames compound fields (radio, checkbox, split, triple,
+  // select with other) that fail validation; it only tints their inputs. Restores the
+  // old ENgrid look: the whole field element gets the faded error background and border.
+  .en__component .en__field {
+    &.en__field--checkbox,
+    &.en__field--radio,
+    &.en__field--select.en__field--withOther,
+    &.en__field--splitselect,
+    &.en__field--splittext,
+    &.en__field--tripleselect,
+    &.en__field--tripletext {
+      &.en__field--validationFailed .en__field__element {
+        border: var(--error__border-width) solid var(--error__color);
+        background-color: var(--error__color_faded);
+        padding: 0.5rem 0.5rem 0;
+        border-radius: var(--input_border-radius);
+        // ENgrid 0.28 pulls compound wrappers out by --fields_spacing-inline; keep the
+        // frame aligned with the label and the error message, as before
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      &.en__field--validationFailed.has-value .en__field__element {
+        border-color: var(--error__color_grayscale);
+        background-color: var(--error__color_grayscale);
+        color: var(--color_white);
+      }
+    }
+  }
+
+  // Inside the framed field, the "Other" input keeps its normal look (ENgrid 0.28 tints it)
+  .en__field--radio.en__field--validationFailed .en__field__input--other {
+    --input_placeholder-color: var(--color_light-gray);
+    border-color: var(--input_border-color);
+    background-color: var(--input_background-color);
+  }
+
+  /*
+    * ##########################################################
     * # DONATION: PAYMENT FIELDS
     * ##########################################################
     */
+
+  .en__field__input--vgs {
+    --en-vgs-height: calc(1.5em + 2ch + 2 * var(--input_border-width));
+  }
 
   a.whats-this {
     font-size: 12px;
     text-transform: none;
     position: absolute;
+    top: 0.375rem; // = label padding-top (FORM SPACING). ENgrid 0.28 labels are relative flex containers, so the static position was centered
     right: 0;
     text-decoration: underline;
     color: #767676;
     font-weight: 400;
   }
 
+  // "Select with other" (e.g. Prayer Intention): the old ENgrid stretched the select;
+  // in 0.28 its item keeps the content width
+  .en__field--withOther
+    .en__field__element--select
+    > .en__field__item:not(.en__field__item--other) {
+    flex-grow: 1;
+
+    select {
+      width: 100%;
+    }
+  }
+
   .card,
   .check,
   .paypal {
     flex-basis: calc(100% / 3);
+  }
+
+  // Payment method block ("give-by-select radio-to-buttons" in EN). ENgrid 0.28 sizes
+  // .radio-to-buttons items with --radio-to-buttons__button_count (default 4) and colors the
+  // checked one with --button_*_checked. The old theme: 3 per row, checked one outlined.
+  .give-by-select {
+    --radio-to-buttons__button_count: 3;
+    --button_padding: 12px 5px;
+    --button_color_checked: var(--color_cta);
+    --button_background-color_checked: var(--color_white);
+    --button_border-color_checked: var(--color_cta);
   }
 
   // Makes the paypal logo white and selection
@@ -568,13 +778,16 @@ body:not(#en__pagebuilder) {
   // Footer Styles
   @mixin mobile-content-footer {
     // Adjust donation amount fields to display two to a Row
+    // (ENgrid 0.28 items carry their own horizontal padding, so no "- 1rem" here)
     .en__field--donationAmt div.en__field__item:not(.en__field__item--other) {
-      flex-basis: calc((100% * (1 / 2)) - 1rem);
+      flex-basis: calc(100% * (1 / 2));
       max-width: calc(100% * (1 / 2));
     }
 
     .content-footer {
-      --theme-content-footer-background-color: #e4e4e4;
+      // Removed: --engrid__content-footer_background-color: #e4e4e4;
+      // The footer text is white, so on mobile it disappeared on the light gray (bug also
+      // present on the live theme). See NOTAS-ENTREGA.md to restore it.
 
       footer {
         flex-direction: column;
@@ -668,14 +881,14 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 775px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
                   pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
                   cc-start lcc-start]  minmax(0px, 0px)        [lcc-end
-                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
-                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  bc-start lbc-start]  minmax(0px, 260px)      [lbc-end
+                  rbc-start]           minmax(0px, 260px)      [rbc-end bc-end
                   rcc-start]           minmax(0px, 0px)        [rcc-end cc-end
                   rpc-start]           minmax(0px, 1fr)        [rpc-end pc-end               
                   ];
@@ -697,14 +910,14 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 775px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
                   pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
                   cc-start lcc-start]  minmax(0px, 128px)      [lcc-end
-                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
-                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  bc-start lbc-start]  minmax(0px, 260px)      [lbc-end
+                  rbc-start]           minmax(0px, 260px)      [rbc-end bc-end
                   rcc-start]           minmax(0px, 1fr)        [rcc-end cc-end
                   rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
                   ];
@@ -716,14 +929,14 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 775px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
                   pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
                   cc-start lcc-start]  minmax(0px, 1fr)        [lcc-end
-                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
-                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  bc-start lbc-start]  minmax(0px, 260px)      [lbc-end
+                  rbc-start]           minmax(0px, 260px)      [rbc-end bc-end
                   rcc-start]           minmax(0px, 1fr)        [rcc-end cc-end
                   rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
                   ];
@@ -735,14 +948,14 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 775px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
                   pc-start lpc-start]  minmax(0px, 0px)        [lpc-end
                   cc-start lcc-start]  minmax(0px, 1fr)        [lcc-end
-                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
-                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  bc-start lbc-start]  minmax(0px, 260px)      [lbc-end
+                  rbc-start]           minmax(0px, 260px)      [rbc-end bc-end
                   rcc-start]           minmax(0px, 128px)      [rcc-end cc-end
                   rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
                   ];
@@ -754,14 +967,14 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 775px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
                   pc-start lpc-start]  minmax(0px, 1fr)        [lpc-end
                   cc-start lcc-start]  minmax(0px, 0px)        [lcc-end
-                  bc-start lbc-start]  minmax(260px, 260px)    [lbc-end
-                  rbc-start]           minmax(260px, 260px)    [rbc-end bc-end
+                  bc-start lbc-start]  minmax(0px, 260px)      [lbc-end
+                  rbc-start]           minmax(0px, 260px)      [rbc-end bc-end
                   rcc-start]           minmax(0px, 0px)        [rcc-end cc-end
                   rpc-start]           minmax(0px, 0px)        [rpc-end pc-end               
                   ];
@@ -786,7 +999,7 @@ body:not(#en__pagebuilder) {
   @media screen and (max-width: 774px) {
     /* prettier-ignore */
     .en__component--advrow,
-        .en__component--advrow .pseudo-subgrid {
+        .en__component--advrow > * {
             /* autoprefixer grid: off */
             grid-template-columns:
             [
@@ -805,7 +1018,7 @@ body:not(#en__pagebuilder) {
   @media screen and (min-width: 1000px) {
     /* prettier-ignore */
     .en__component--advrow,
-              .en__component--advrow .pseudo-subgrid {
+              .en__component--advrow > * {
                   /* autoprefixer grid: off */
                   grid-template-columns:
                   [
@@ -865,10 +1078,10 @@ body:not(#en__pagebuilder) {
   }
 
   @media screen and (max-width: 999px) {
-    --theme-body-padding: 0px 24px;
+    --engrid__body_padding: 0px 24px;
     /* prettier-ignore */
     .en__component--advrow,
-        .en__component--advrow .pseudo-subgrid {
+        .en__component--advrow > * {
             /* autoprefixer grid: off */
             grid-template-columns:
             [
@@ -949,14 +1162,14 @@ body#en__pagebuilder .content-footerSpacer {
 [data-engrid-theme="sag"][data-engrid-layout="centercenter1col"],
 [data-engrid-theme="sag"][data-engrid-layout="centerright1col"],
 [data-engrid-theme="sag"][data-engrid-layout="rightright1col"] {
-  --theme-body-padding: 0px 60px;
+  --engrid__body_padding: 0px 60px;
 
   .body-bottom {
     padding-bottom: 60px;
   }
 
   @media screen and (max-width: 774px) {
-    --theme-body-padding: 0px 24px;
+    --engrid__body_padding: 0px 24px;
   }
 }
 
@@ -975,7 +1188,7 @@ body#en__pagebuilder .content-footerSpacer {
 }
 
 [data-engrid-theme="sag"][data-engrid-layout="centercenter2col"] {
-  --theme-body-padding: 0px 50px;
+  --engrid__body_padding: 0px 50px;
 
   // Remove the box body based shadow, otherwise it will overlap with the side-by-side content
   .body-header:before,
@@ -1009,7 +1222,7 @@ body#en__pagebuilder .content-footerSpacer {
   }
 
   @media screen and (max-width: 999px) {
-    --theme-body-padding: 0px 24px;
+    --engrid__body_padding: 0px 24px;
   }
 }
 
@@ -1026,9 +1239,9 @@ body#en__pagebuilder .content-footerSpacer {
     .body-banner,
     .body-bannerOverlay,
     .body-top {
-      --theme-body-title-background-color: #f5f5f5;
-      --theme-body-banner-background-color: #f5f5f5;
-      --theme-body-top-background-color: #f5f5f5;
+      --engrid__body-title_background-color: #f5f5f5;
+      --engrid__body-banner_background-color: #f5f5f5;
+      --engrid__body-top_background-color: #f5f5f5;
     }
   }
 }
@@ -1038,17 +1251,17 @@ body#en__pagebuilder .content-footerSpacer {
 .en__field__input--vgs {
   width: 100%;
   transition: box-shadow 0.25s, border-color 0.25s ease-in-out; // Shared between input, textarea, and select
-  border: var(--theme-typography-input-border-width) solid
-    var(--theme-typography-input-border-color);
-  border-radius: var(--theme-typography-input-border-radius);
-  background-color: var(--theme-typography-input-background-color);
+  border: var(--input_border-width) solid
+    var(--input_border-color);
+  border-radius: var(--input_border-radius);
+  background-color: var(--input_background-color);
   &.vgs-collect-container__focused {
-    color: var(--theme-typography-input-focus-hover-color);
-    border-color: var(--theme-typography-input-focus-hover-border-color);
+    color: var(--input_color_hover);
+    border-color: var(--input_border-color_hover);
     background-color: var(
-      --theme-typography-input-focus-hover-background-color
+      --input_background-color_hover
     );
-    box-shadow: var(--theme-typography-input-focus-hover-box-shadow);
+    box-shadow: var(--input_box-shadow_hover);
     outline-style: auto;
     outline-color: -webkit-focus-ring-color;
 
@@ -1058,14 +1271,25 @@ body#en__pagebuilder .content-footerSpacer {
     }
   }
   iframe {
-    border-radius: var(--theme-typography-input-border-radius);
+    border-radius: var(--input_border-radius);
   }
 }
 .en__field--validationFailed
   .en__field__input--vgs:not(.vgs-collect-container__focused) {
   &.vgs-collect-container__invalid,
   &.vgs-collect-container__empty {
-    border-color: var(--theme-error-red);
-    background-color: var(--theme-error-red-faded);
+    border-color: var(--error__color);
+    background-color: var(--error__color_faded);
   }
+}
+
+// ENgrid 0.28 no longer applies the --strong_* properties to <strong> (they were inert,
+// see etapa-5.md). The old ENgrid did, so e.g. "<h3><strong>Transaction details</strong></h3>"
+// on the thank you page rendered at 16px. Same low specificity as the old rule (0-0-1).
+:where([data-engrid-theme="sag"]) strong {
+  font-family: var(--strong_font-family);
+  color: var(--strong_color);
+  font-size: var(--strong_font-size);
+  font-weight: var(--strong_font-weight);
+  line-height: var(--strong_line-height);
 }
