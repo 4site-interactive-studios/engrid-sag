@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, October 29, 2026 @ 12:53:56 ET
+ *  Date: Thursday, October 29, 2026 @ 15:19:13 ET
  *  By: rcw-015crmhahsb5u1zmdcjxtfso
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -27723,7 +27723,7 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
  * - Imports point to the @4site/engrid-scripts package.
  * - The cookie is saved on the site's domain (.nonprofit.org) instead of the current
  *   subdomain (give.nonprofit.org, join.nonprofit.org), so every subdomain reads the
- *   same data. No new options.
+ *   same data.
  * - Reading drops an old host-only copy so it can't shadow the shared cookie, moving
  *   its data to the domain when no shared copy exists yet.
  */
@@ -27734,6 +27734,11 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 // localStorage key used to cache the per-device AES-GCM encryption key.
 // A random secret generated once per device and held in localStorage.
 const remember_me_RM_ENCRYPTION_KEY_STORAGE_NAME = "engrid-remember-me-key";
+
+// SAG: the site's domain for a URL or host: the last 2 parts of the host
+// (join.stanthonysguild.org -> stanthonysguild.org), or the last 3 when the host has
+// more than 3 parts.
+const getDomain = str => (h => h.split(".").slice(h.split(".").length > 3 ? -3 : -2).join("."))(new URL(str.includes("//") ? str : "//" + str).host);
 class remember_me_RememberMe {
   constructor(options) {
     _defineProperty(this, "_form", EnForm.getInstance());
@@ -28156,33 +28161,10 @@ class remember_me_RememberMe {
   // shared across them would show one client's supporter data on another client's
   // pages (many clients use the default cookie name), so here it stays host-only.
 
-  // SAG: finds the site's registrable domain (join.stanthonysguild.org ->
-  // stanthonysguild.org) by writing a test cookie to each candidate, shortest first.
-  // Browsers refuse cookies on public suffixes (org, co.uk...), so the first
-  // candidate that keeps the cookie is the site's domain.
+  // SAG: domain the cookie is saved on (see getDomain above)
   static detectSiteDomain() {
-    const host = window.location.hostname.toLowerCase();
-    // localhost and IP addresses can't share cookies with other hosts
-    if (!host.includes(".") || /^[\d.]+$/.test(host) || host.includes(":")) {
-      return null;
-    }
-    const labels = host.split(".");
-    const testName = "engrid-remember-me-domain-test";
-    const testValue = String(Math.random()).slice(2);
-    for (let i = labels.length - 2; i >= 0; i--) {
-      const candidate = labels.slice(i).join(".");
-      set(testName, testValue, {
-        domain: candidate
-      });
-      const accepted = cookie_get(testName) === testValue;
-      cookie_remove(testName, {
-        domain: candidate
-      });
-      if (accepted) {
-        return remember_me_RememberMe.SHARED_PLATFORM_DOMAINS.indexOf(candidate) > -1 ? null : candidate;
-      }
-    }
-    return null;
+    const domain = getDomain(window.location.href);
+    return remember_me_RememberMe.SHARED_PLATFORM_DOMAINS.indexOf(domain) > -1 ? null : domain;
   }
   // SAG: with a cookie domain, an old host-only copy (written by core RememberMe)
   // can coexist with the shared one, and cookie.get returns whichever comes last in

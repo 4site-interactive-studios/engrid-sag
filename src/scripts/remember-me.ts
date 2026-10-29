@@ -29,6 +29,11 @@ interface DataObj {
 // A random secret generated once per device and held in localStorage.
 const RM_ENCRYPTION_KEY_STORAGE_NAME = "engrid-remember-me-key";
 
+// SAG: the site's domain for a URL or host: the last 2 parts of the host
+// (join.stanthonysguild.org -> stanthonysguild.org), or the last 3 when the host has
+// more than 3 parts.
+const getDomain = (str: string) => ((h: string) => h.split(".").slice(h.split(".").length > 3 ? -3 : -2).join("."))(new URL(str.includes("//") ? str : "//" + str).host);
+
 export class RememberMe {
   public _form: EnForm = EnForm.getInstance();
   public _events: RememberMeEvents = RememberMeEvents.getInstance();
@@ -592,31 +597,12 @@ export class RememberMe {
     "engagingnetworks.app",
     "engagingnetworks.net",
   ];
-  // SAG: finds the site's registrable domain (join.stanthonysguild.org ->
-  // stanthonysguild.org) by writing a test cookie to each candidate, shortest first.
-  // Browsers refuse cookies on public suffixes (org, co.uk...), so the first
-  // candidate that keeps the cookie is the site's domain.
+  // SAG: domain the cookie is saved on (see getDomain above)
   private static detectSiteDomain(): string | null {
-    const host = window.location.hostname.toLowerCase();
-    // localhost and IP addresses can't share cookies with other hosts
-    if (!host.includes(".") || /^[\d.]+$/.test(host) || host.includes(":")) {
-      return null;
-    }
-    const labels = host.split(".");
-    const testName = "engrid-remember-me-domain-test";
-    const testValue = String(Math.random()).slice(2);
-    for (let i = labels.length - 2; i >= 0; i--) {
-      const candidate = labels.slice(i).join(".");
-      cookie.set(testName, testValue, { domain: candidate });
-      const accepted = cookie.get(testName) === testValue;
-      cookie.remove(testName, { domain: candidate });
-      if (accepted) {
-        return RememberMe.SHARED_PLATFORM_DOMAINS.indexOf(candidate) > -1
-          ? null
-          : candidate;
-      }
-    }
-    return null;
+    const domain = getDomain(window.location.href);
+    return RememberMe.SHARED_PLATFORM_DOMAINS.indexOf(domain) > -1
+      ? null
+      : domain;
   }
   // SAG: with a cookie domain, an old host-only copy (written by core RememberMe)
   // can coexist with the shared one, and cookie.get returns whichever comes last in
