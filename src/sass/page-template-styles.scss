@@ -563,9 +563,15 @@ body:not(#en__pagebuilder) {
       }
     }
 
-    // Radio and checkbox items: no space above, --fields_spacing-block (0.5rem) below
+    // Radio, checkbox and split/triple items (e.g. the MM / YYYY expiration selects):
+    // no space above, --fields_spacing-block (0.5rem) below. Without this, split selects sit
+    // 4px lower than a plain input next to them (CVV beside the expiration date).
     .en__field__element--radio .en__field__item,
-    .en__field__element--checkbox .en__field__item {
+    .en__field__element--checkbox .en__field__item,
+    .en__field__element--splitselect .en__field__item,
+    .en__field__element--splittext .en__field__item,
+    .en__field__element--tripleselect .en__field__item,
+    .en__field__element--tripletext .en__field__item {
       padding-top: 0;
     }
 
@@ -663,6 +669,10 @@ body:not(#en__pagebuilder) {
     * # DONATION: PAYMENT FIELDS
     * ##########################################################
     */
+
+  .en__field__input--vgs {
+    --en-vgs-height: calc(1.5em + 2ch + 2 * var(--input_border-width));
+  }
 
   a.whats-this {
     font-size: 12px;

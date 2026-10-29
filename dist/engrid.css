@@ -19,7 +19,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, October 29, 2026 @ 07:56:36 ET
+ *  Date: Thursday, October 29, 2026 @ 08:20:52 ET
  *  By: rcw-01bssbpd8chab9ey8bquhah6
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -8970,7 +8970,7 @@ body:not(#en__pagebuilder) .page-backgroundImage img{
 [data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element>.en__field__input--vgs,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element>input,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element>select,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element>textarea{
   margin-top:0;
 }
-[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--checkbox .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--radio .en__field__item{
+[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--checkbox .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--radio .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--splitselect .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--splittext .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--tripleselect .en__field__item,[data-engrid-theme=sag] .en__component--formblock .en__field .en__field__element--tripletext .en__field__item{
   padding-top:0;
 }
 [data-engrid-theme=sag] .en__component--formblock .en__field.en__field--checkbox,[data-engrid-theme=sag] .en__component--formblock .en__field.en__field--radio{
@@ -9017,6 +9017,9 @@ body:not(#en__pagebuilder) .page-backgroundImage img{
   --input_placeholder-color:var(--color_light-gray);
   background-color:var(--input_background-color);
   border-color:var(--input_border-color);
+}
+[data-engrid-theme=sag] .en__field__input--vgs{
+  --en-vgs-height:calc(1.5em + 2ch + var(--input_border-width)*2);
 }
 [data-engrid-theme=sag] a.whats-this{
   color:#767676;
