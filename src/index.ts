@@ -4,6 +4,7 @@ import { Options, App } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
 import "./sass/main.scss";
 import { customScript } from "./scripts/main";
 import { RememberMe, RememberMeOptions } from "./scripts/remember-me";
+import { SurveyLadder } from "./scripts/survey-ladder";
 
 // The default Remember Me tooltip quotes the clear link, which has no name on a first visit
 (window as any).EngridI18n = {
@@ -76,6 +77,7 @@ const options: Options = {
   onLoad: () => {
     startRememberMe();
     customScript(App);
+    new SurveyLadder();
   },
   onResize: () => console.log("Starter Theme Window Resized"),
 };

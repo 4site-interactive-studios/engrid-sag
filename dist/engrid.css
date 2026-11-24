@@ -19,8 +19,8 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, October 29, 2026 @ 15:19:13 ET
- *  By: rcw-015crmhahsb5u1zmdcjxtfso
+ *  Date: Tuesday, November 24, 2026 @ 08:52:29 ET
+ *  By: pedroluan
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
  *
@@ -9382,6 +9382,32 @@ body:not(#en__pagebuilder) .page-backgroundImage img{
   font-size:var(--strong_font-size);
   font-weight:var(--strong_font-weight);
   line-height:var(--strong_line-height);
+}
+
+.survey-ladder-saved,body[data-engrid-survey-ladder=hidden]{
+  display:none;
+}
+
+.survey-ladder-options .en__field__element--checkbox,.survey-ladder-options .en__field__item{
+  display:block;
+}
+
+.survey-ladder-wrapper{
+  position:relative;
+}
+
+.survey-ladder-curtain{
+  align-items:center;
+  background:#fff;
+  display:flex;
+  inset:0;
+  justify-content:center;
+  padding:1.5rem;
+  position:absolute;
+  text-align:center;
+}
+.survey-ladder-curtain[hidden]{
+  display:none;
 }
 body{
   opacity:1;

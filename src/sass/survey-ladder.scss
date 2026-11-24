@@ -1,0 +1,39 @@
+/* SURVEY LADDER (POC) */
+/* See src/scripts/survey-ladder.ts */
+
+// Survey page: nothing to show (unidentified, all answered, or broken structure)
+body[data-engrid-survey-ladder="hidden"] {
+  display: none;
+}
+
+// Survey page: holds the supporter data merge tag of each question
+.survey-ladder-saved {
+  display: none;
+}
+
+// Survey page: one option per line. EN lays checkbox items out inline, and
+// ENgrid's column layout only applies inside Form Blocks, not Text Blocks
+.survey-ladder-options .en__field__element--checkbox,
+.survey-ladder-options .en__field__item {
+  display: block;
+}
+
+// Parent thank-you page: the iframe's container and the curtain over it
+.survey-ladder-wrapper {
+  position: relative;
+}
+
+.survey-ladder-curtain {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  background: #fff;
+
+  &[hidden] {
+    display: none;
+  }
+}
