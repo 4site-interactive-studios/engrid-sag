@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 09:16:02 ET
+ *  Date: Thursday, November 26, 2026 @ 11:47:31 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -28472,30 +28472,75 @@ _defineProperty(remember_me_RememberMe, "SHARED_PLATFORM_DOMAINS", ["e-activist.
  * "survey-ladder-saved" (hidden by CSS) holds a merge tag per question, each in
  * a paragraph named after its field:
  *   <p class="survey-ladder-saved--NOT_TAGGED_20">{user_data~...}</p>
+ * EN renders a merge tag as is (with its braces) when it doesn't know the
+ * supporter. For a known supporter, a wrong field name in the tag renders
+ * empty, like an unanswered question: that question keeps showing, and
+ * nothing can be logged.
  *
- * Survey page embedded on a thank-you page: shows only the first question
- * with no saved answer, and at least one option is required.
+ * Survey page in an iframe on a donation thank-you page (the ladder): shows
+ * only the first question with no saved answer, and at least one option is
+ * required. Only questions whose merge tag rendered take part; the others
+ * can't tell answered from unanswered and would show forever. Shows nothing
+ * when EN doesn't know the supporter (no email, or no merge tag rendered).
+ * CSS hides the survey inside any iframe until this script picks the question,
+ * so a failure shows nothing. index.ts doesn't start Remember Me there, so its
+ * cookie can't fill the email.
  *
  * Survey page anywhere else (opened directly, from an email campaign link, or
  * chained from another page): every question shows. EN pre-checks the options
  * itself when it pre-fills the page; when it doesn't (a ?chain redirect), the
  * options in the merge tag are pre-checked here, so an earlier answer is kept.
  *
- * Checkbox option values must not contain commas, since commas separate saved
- * values. Radio values can (e.g. "Yes, regularly"): Radio saves a single value.
+ * Parent thank-you page (iframe with the class "survey-ladder-iframe"): keeps
+ * the page still while the survey moves to its own thank-you page.
+ *
+ * EN joins the checked values of a Checkbox with commas. Saved values are
+ * matched against the field's own options, so a value with a comma (e.g.
+ * "Yes, regularly") stays whole. Radio saves a single value.
+ *
+ * Configuration errors go to console.error, with or without ?debug=true.
  */
 
-const ERROR_MESSAGE = "Please choose at least one option.";
+const ERROR_KEY = "surveyLadder.error"; // EngridI18n key
+const ERROR_FALLBACK = "Please choose at least one option.";
 const SAVED_CLASS = "survey-ladder-saved";
+const IFRAME_CLASS = "survey-ladder-iframe";
+// On a block of the survey's own thank-you page
+const THANK_YOU_CLASS = "survey-ladder-thank-you";
+// ?survey_ladder=1 in the iframe src: ladder mode even if ENgrid can't read
+// the parent URL (cross-origin, a # in it, a thank-you page on page 1)
+const LADDER_PARAM = "survey_ladder";
 class SurveyLadder {
   constructor() {
     _defineProperty(this, "logger", new EngridLogger("SurveyLadder", "white", "#7a2142", "📋"));
     _defineProperty(this, "form", EnForm.getInstance());
+    _defineProperty(this, "dataLayer", DataLayer.getInstance());
     this.runOnSurveyPage();
+    if (!SurveyLadder.inIframe()) this.runOnParentPage();
+  }
+
+  /**
+   * A page in an iframe on a donation thank-you page, or in an iframe whose
+   * src has ?survey_ladder=1. True for any page there, not only the survey.
+   * ENgrid sets "embedded" before onLoad, so index.ts can call this before
+   * starting Remember Me.
+   */
+  static isEmbeddedOnThankYouPage() {
+    if (!SurveyLadder.inIframe()) return false;
+    return engrid_ENGrid.getBodyData("embedded") === "thank-you-page-donation" || engrid_ENGrid.getUrlParameter(LADDER_PARAM) === "1";
+  }
+  static inIframe() {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
   }
   runOnSurveyPage() {
+    const embedded = SurveyLadder.isEmbeddedOnThankYouPage();
+
     // The survey's own thank-you page, in the iframe after the answer: no padding either
-    if (this.embeddedOnThankYouPage() && engrid_ENGrid.getPageNumber() > 1) {
+    if (embedded && document.querySelector(`.${THANK_YOU_CLASS}`)) {
       engrid_ENGrid.setBodyData("survey-ladder", "ladder");
       this.resizeIframe();
       return;
@@ -28504,75 +28549,145 @@ class SurveyLadder {
     if (formBlocks.length === 0) return; // Not the survey page
     if (engrid_ENGrid.getPageNumber() !== 1) return; // The survey's own thank-you page
 
-    const onThankYouPage = this.embeddedOnThankYouPage();
+    // Broken blocks are logged and left out
     const questions = formBlocks.map(formBlock => this.readQuestion(formBlock)).filter(question => question !== null);
-    if (questions.length !== formBlocks.length) {
-      if (onThankYouPage) this.hideSurvey("Page structure doesn't match");
-      return;
-    }
-    if (onThankYouPage) {
-      this.runLadder(questions);
+    if (embedded) {
+      this.runLadder(formBlocks, questions);
     } else {
       this.logger.log("Not embedded on a thank-you page, showing every question");
+      if (questions.some(question => question.mergeTag === "rendered")) {
+        this.reportRawMergeTags(questions);
+      }
       questions.forEach(question => this.preselect(question));
     }
   }
 
   // One question per action: the first one the supporter hasn't answered
-  runLadder(questions) {
-    engrid_ENGrid.setBodyData("survey-ladder", "ladder"); // Drops the page padding (CSS)
-
+  runLadder(formBlocks, questions) {
     if (!engrid_ENGrid.getFieldValue("supporter.emailAddress")) {
-      this.hideSurvey("Supporter not identified");
+      this.hideSurvey("no-email", "Supporter not identified (no email)");
       return;
     }
-    const current = questions.findIndex(question => !this.isAnswered(question));
-    if (current === -1) {
-      this.hideSurvey("Every question is answered");
+
+    // Only a rendered merge tag tells answered from unanswered. None rendered:
+    // EN doesn't know the supporter, or the Text Block is missing
+    const usable = questions.filter(question => question.mergeTag === "rendered");
+    if (usable.length === 0) {
+      this.hideSurvey("no-merge-tag", "No merge tag rendered");
+      return;
+    }
+    this.reportRawMergeTags(questions);
+    const current = usable.find(question => !this.isAnswered(question));
+    if (!current) {
+      this.hideSurvey("all-answered", "Every question is answered");
       return;
     }
 
     // Keep only the current question, so only its field is posted
-    questions.forEach((question, index) => {
-      if (index !== current) question.formBlock.remove();
+    formBlocks.forEach(formBlock => {
+      if (formBlock !== current.formBlock) formBlock.remove();
     });
-    const question = questions[current];
-    const hasAnswer = () => question.options.some(option => option.checked);
-    question.options.forEach(option => option.addEventListener("change", () => {
-      if (hasAnswer()) {
-        engrid_ENGrid.removeError(question.field);
-        this.resizeIframe();
-      }
+    const hasAnswer = () => current.options.some(option => option.checked);
+    const checkedCount = () => current.options.filter(option => option.checked).length;
+
+    // The click on an option makes ENgrid resend the iframe height
+    current.options.forEach(option => option.addEventListener("change", () => {
+      if (hasAnswer()) engrid_ENGrid.removeError(current.field);
     }));
+
+    // ENgrid's A11y announces the error, ties it to the field's group and
+    // focuses the first option; setError makes ENgrid resend the iframe height
     this.form.onValidate.subscribe(() => {
       if (hasAnswer()) return;
-      engrid_ENGrid.setError(question.field, ERROR_MESSAGE);
+      engrid_ENGrid.setError(current.field, this.errorMessage());
       this.form.validate = false;
-      this.resizeIframe();
     });
-    this.logger.log(`Showing question ${current + 1} of ${questions.length} (${question.fieldName})`);
+    const step = formBlocks.indexOf(current.formBlock) + 1;
+    const total = formBlocks.length;
+    const label = this.questionLabel(current);
+    this.form.onSubmit.subscribe(() => {
+      // How many options, not which: the answer itself goes to EN only
+      this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SUBMIT", {
+        survey_field: current.key,
+        survey_question: label,
+        survey_options_checked: checkedCount()
+      });
+    });
+
+    // EN error after submit: EN shows page 1 again with its error list, and the
+    // same question shows again, since its answer wasn't saved
+    const serverErrors = document.querySelectorAll(".en__errorList li");
+    if (serverErrors.length > 0) {
+      this.logger.error(`EN returned an error on submit: ${Array.from(serverErrors).map(error => error.textContent?.trim()).join(" | ")}`);
+    }
+
+    // Last, once the other blocks are gone: shows the question (CSS) and drops
+    // the page padding
+    engrid_ENGrid.setBodyData("survey-ladder", "ladder");
+    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SHOWN", {
+      survey_field: current.key,
+      survey_question: label,
+      survey_step: step,
+      survey_total_steps: total
+    });
+    this.logger.log(`Showing question ${step} of ${total} (${current.fieldName})`);
     this.resizeIframe();
   }
   readQuestion(formBlock) {
     const options = Array.from(formBlock.querySelectorAll('input[type="checkbox"][name^="supporter."], input[type="radio"][name^="supporter."]'));
-    const field = options[0]?.closest(".en__field");
-    if (options.length === 0 || !field) {
-      this.logger.error("A survey-ladder Form Block has no Checkbox or Radio field");
+    const names = options.map(option => option.name).filter((name, index, all) => all.indexOf(name) === index);
+    if (names.length !== 1) {
+      this.configError(`A survey-ladder Form Block needs exactly one Checkbox or Radio field, found ${names.length}${names.length ? ` (${names.join(", ")})` : ""}. Skipped`);
       return null;
     }
-    const fieldName = options[0].name; // e.g. supporter.NOT_TAGGED_20
+    const fieldName = names[0];
     const key = fieldName.replace(/^supporter\./, "");
-    const savedElement = document.querySelector(`.${SAVED_CLASS}--${key}`);
+    const field = options[0].closest(".en__field");
+    if (!field) {
+      this.configError(`${fieldName} has no .en__field wrapper. Skipped`);
+      return null;
+    }
+    this.labelGroup(field, key);
+    const savedElement = document.querySelector(`.${SAVED_CLASS}--${CSS.escape(key)}`);
+    const text = savedElement?.textContent || "";
+    let mergeTag = "rendered";
     if (!savedElement) {
-      this.logger.error(`No merge tag found for ${fieldName} (expected .${SAVED_CLASS}--${key})`);
+      mergeTag = "missing";
+      this.configError(`No merge tag found for ${fieldName} (expected .${SAVED_CLASS}--${key}). Skipped on thank-you pages`);
+    } else if (text.indexOf("{") !== -1) {
+      // Any brace, not only {user_data~...}: a tag with a typo in its syntax
+      // is caught too, instead of being read as an answer
+      mergeTag = "raw";
     }
     return {
       formBlock,
       field,
       fieldName,
+      key,
       options,
-      saved: this.parseSaved(savedElement?.textContent || "", options[0].type === "radio")
+      mergeTag,
+      saved: mergeTag === "rendered" ? this.parseSaved(text, options, options[0].type === "radio") : []
     };
+  }
+
+  /**
+   * Screen readers read the question with its options as one group. ENgrid's
+   * A11y does this for Radio fields only; this does the same for Checkbox ones.
+   */
+  labelGroup(field, key) {
+    if (field.getAttribute("role") === "group") return;
+    const label = field.querySelector(":scope > .en__field__label");
+    if (!label) return;
+    if (!label.id) label.id = `survey-ladder-label--${key}`;
+    if (label.getAttribute("for") === "") label.removeAttribute("for");
+    field.setAttribute("role", "group");
+    field.setAttribute("aria-labelledby", label.id);
+  }
+
+  // For a known supporter, a raw merge tag is one EN didn't process (e.g. a typo
+  // in its syntax). A wrong field name renders empty and can't be told apart
+  reportRawMergeTags(questions) {
+    questions.filter(question => question.mergeTag === "raw").forEach(question => this.configError(`The merge tag for ${question.fieldName} didn't render (check its syntax). Skipped on thank-you pages`));
   }
 
   // Answered: the merge tag has saved values, or EN pre-checked an option
@@ -28593,33 +28708,96 @@ class SurveyLadder {
     }
   }
 
-  // An unidentified visit renders the raw merge tag, which isn't an answer
-  parseSaved(text, singleValue) {
-    if (text.indexOf("{") !== -1) return [];
-    if (singleValue) return text.trim() ? [text.trim()] : [];
-    return text.split(",").map(value => value.trim()).filter(value => value !== "");
+  // Matches the field's own options, longest first, so a value with a comma
+  // (e.g. "Yes, regularly") isn't split. A value no longer in the options
+  // (renamed or removed) runs up to the next comma
+  parseSaved(text, options, singleValue) {
+    const trimmed = text.trim();
+    if (!trimmed) return [];
+    if (singleValue) return [trimmed];
+    const values = options.map(option => option.value).filter(value => value !== "").sort((a, b) => b.length - a.length);
+    const saved = [];
+    let rest = trimmed;
+    while (rest = rest.replace(/^[\s,]+/, "")) {
+      const known = values.find(value => rest === value || rest.startsWith(`${value},`));
+      const comma = rest.indexOf(",");
+      const value = known ?? (comma === -1 ? rest : rest.slice(0, comma));
+      saved.push(value.trim());
+      rest = rest.slice(value.length);
+    }
+    return saved;
   }
-  hideSurvey(reason) {
-    this.logger.log(`Hiding the survey: ${reason}`);
+  questionLabel(question) {
+    const label = question.field.querySelector(":scope > .en__field__label");
+    return label?.textContent?.trim() || question.key;
+  }
+  errorMessage() {
+    const text = engrid_ENGrid.t(ERROR_KEY);
+    return text && text !== ERROR_KEY ? text : ERROR_FALLBACK;
+  }
+  hideSurvey(reason, description) {
+    this.logger.log(`Hiding the survey: ${description}`);
     engrid_ENGrid.setBodyData("survey-ladder", "hidden");
+    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_HIDDEN", {
+      survey_hidden_reason: reason
+    });
     this.resizeIframe();
   }
 
-  // ENgrid 0.28.5 only re-sends the iframe height on load and resize
-  resizeIframe() {
-    window.dispatchEvent(new Event("resize"));
+  // Shows with or without ?debug=true: these need a fix in the page builder
+  configError(message) {
+    console.error(`SurveyLadder: ${message}`);
   }
 
-  // Inside an iframe on a donation thank-you page (ENgrid sets "embedded")
-  embeddedOnThankYouPage() {
-    return this.inIframe() && engrid_ENGrid.getBodyData("embedded") === "thank-you-page-donation";
+  /**
+   * Parent thank-you page: keeps the page still while the survey moves to its
+   * own thank-you page. Lives in the theme, not in the TY Code Block, so it's
+   * versioned and the same on every brand.
+   */
+  runOnParentPage() {
+    const iframe = document.querySelector(`iframe.${IFRAME_CLASS}`);
+    if (!iframe) return;
+
+    // Same scroll fix as NWF's Opt-In Ladder: the iframe changing height
+    // doesn't make the browser scroll the page
+    document.documentElement.style.overflowAnchor = "none";
+
+    // Capture phase: runs before ENgrid's iFrame listener, so it can stop it
+    window.addEventListener("message", event => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== iframe.contentWindow) return;
+      const data = event.data || {};
+
+      // ENgrid sends "submit" from the survey's onSubmit. Freezing the height
+      // keeps the iframe from shrinking when the survey's thank-you page loads
+      if (data.status === "submit") {
+        iframe.style.minHeight = `${iframe.offsetHeight}px`;
+        return;
+      }
+
+      // When the survey's thank-you page loads, ENgrid asks the parent to
+      // scroll to the iframe (the referrer is an EN page). The answer was given
+      // in place, so the page stays put. An EN error on page 1 still scrolls
+      if ("scroll" in data && this.getIframePageNumber(iframe) > 1) {
+        event.stopImmediatePropagation();
+        this.logger.log("Ignored the scroll from the survey's thank-you page");
+      }
+    }, true);
   }
-  inIframe() {
+  getIframePageNumber(iframe) {
     try {
-      return window.self !== window.top;
+      const pageJson = iframe.contentWindow?.pageJson;
+      return Number(pageJson?.pageNumber) || 0;
     } catch (e) {
-      return true;
+      return 0; // Cross-origin: can't read the survey page
     }
+  }
+
+  // Only after DOM changes made on load. ENgrid 0.28.5 resends the height on
+  // clicks and errors, not on DOM changes; 0.28.6+ (ResizeObserver) doesn't
+  // need this
+  resizeIframe() {
+    window.dispatchEvent(new Event("resize"));
   }
 }
 ;// ./src/index.ts
@@ -28685,11 +28863,18 @@ const src_options = {
   RememberMe: true,
   Debug: App.getUrlParameter("debug") == "true" ? true : false,
   onLoad: () => {
-    startRememberMe();
+    // First and on its own, so an error elsewhere can't stop it. If it fails,
+    // CSS keeps the survey hidden inside the thank-you page iframe
+    try {
+      new SurveyLadder();
+    } catch (e) {
+      console.error("SurveyLadder failed:", e);
+    }
+    // Not in a thank-you page iframe (the survey): a Remember Me cookie would
+    // fill the email there and show the survey to a supporter EN doesn't know
+    if (!SurveyLadder.isEmbeddedOnThankYouPage()) startRememberMe();
     customScript(App);
-    new SurveyLadder();
-  },
-  onResize: () => console.log("Starter Theme Window Resized")
+  }
 };
 new App(src_options);
 })();

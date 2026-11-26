@@ -19,7 +19,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 09:16:02 ET
+ *  Date: Thursday, November 26, 2026 @ 11:47:31 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -9383,7 +9383,8 @@ body:not(#en__pagebuilder) .page-backgroundImage img{
   font-weight:var(--strong_font-weight);
   line-height:var(--strong_line-height);
 }
-body[data-engrid-survey-ladder=hidden]{
+
+body[data-engrid-embedded]:not([data-engrid-survey-ladder=ladder]) .body-main:has(.survey-ladder),body[data-engrid-survey-ladder=hidden]{
   display:none;
 }
 
@@ -9422,6 +9423,16 @@ body[data-engrid-survey-ladder=ladder] .body-main{
 
 [data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field__input--checkbox:focus:not(:focus-visible)+.en__field__label,[data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field__input--radio:focus:not(:focus-visible)+.en__field__label{
   outline:none;
+}
+
+[data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field.en__field--validationFailed .en__field__element,[data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field.en__field--validationFailed.has-value .en__field__element{
+  background-color:initial;
+  border:0;
+  color:inherit;
+  padding:0;
+}
+[data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field.en__field--validationFailed .en__field__label--item{
+  color:inherit;
 }
 
 .survey-ladder-saved{

@@ -1,8 +1,16 @@
-/* SURVEY LADDER (POC) */
+/* SURVEY LADDER */
 /* See src/scripts/survey-ladder.ts */
 
 // Survey page: nothing to show (unidentified, all answered, or broken structure)
 body[data-engrid-survey-ladder="hidden"] {
+  display: none;
+}
+
+// Survey page in an iframe: hidden until the script picks the question, so a
+// failure (a script error, the thank-you page not detected) shows nothing
+// instead of every question, and the iframe doesn't open tall and then shrink
+body[data-engrid-embedded]:not([data-engrid-survey-ladder="ladder"])
+  .body-main:has(.survey-ladder) {
   display: none;
 }
 
@@ -67,6 +75,28 @@ body[data-engrid-survey-ladder="ladder"] .body-main {
   .en__field__input--checkbox:focus:not(:focus-visible) + .en__field__label,
   .en__field__input--radio:focus:not(:focus-visible) + .en__field__label {
     outline: none;
+  }
+}
+
+// Survey page: a lighter error state. The theme frames a Checkbox or Radio
+// field with a background (gray, since ENgrid marks these fields "has-value"
+// even with nothing checked) and ENgrid colors every label red. Here only the
+// question turns red, and the theme's error message shows below the options
+[data-engrid-theme="sag"]
+  .en__component--formblock.survey-ladder
+  .en__field.en__field--validationFailed {
+  &,
+  &.has-value {
+    .en__field__element {
+      padding: 0;
+      border: 0;
+      background-color: transparent;
+      color: inherit; // The theme makes it white
+    }
+  }
+
+  .en__field__label--item {
+    color: inherit;
   }
 }
 

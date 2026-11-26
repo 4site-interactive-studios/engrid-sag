@@ -75,10 +75,17 @@ const options: Options = {
   RememberMe: true,
   Debug: App.getUrlParameter("debug") == "true" ? true : false,
   onLoad: () => {
-    startRememberMe();
+    // First and on its own, so an error elsewhere can't stop it. If it fails,
+    // CSS keeps the survey hidden inside the thank-you page iframe
+    try {
+      new SurveyLadder();
+    } catch (e) {
+      console.error("SurveyLadder failed:", e);
+    }
+    // Not in a thank-you page iframe (the survey): a Remember Me cookie would
+    // fill the email there and show the survey to a supporter EN doesn't know
+    if (!SurveyLadder.isEmbeddedOnThankYouPage()) startRememberMe();
     customScript(App);
-    new SurveyLadder();
   },
-  onResize: () => console.log("Starter Theme Window Resized"),
 };
 new App(options);
