@@ -75,11 +75,11 @@ const options: Options = {
   RememberMe: true,
   Debug: App.getUrlParameter("debug") == "true" ? true : false,
   onLoad: () => {
+    IframeQueue.getInstance();
     // First and on its own, so an error elsewhere can't stop it. If it fails,
     // CSS keeps the survey hidden inside the thank-you page iframe
     // Parent mode on the donation page (submits the brand opt-in), embedded
     // mode on the opt-in page (fills the email and submits)
-    IframeQueue.getInstance();
     try {
       new SurveyLadder();
     } catch (e) {
