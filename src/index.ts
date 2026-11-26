@@ -1,9 +1,10 @@
-import { Options, App } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
+import { Options, App, IframeQueue } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
 // import { Options, App } from "../../engrid/packages/scripts"; // Uses ENGrid via Visual Studio Workspace
 
 import "./sass/main.scss";
 import { customScript } from "./scripts/main";
 import { RememberMe, RememberMeOptions } from "./scripts/remember-me";
+import { SurveyLadder } from "./scripts/survey-ladder";
 
 // The default Remember Me tooltip quotes the clear link, which has no name on a first visit
 (window as any).EngridI18n = {
@@ -74,9 +75,22 @@ const options: Options = {
   RememberMe: true,
   Debug: App.getUrlParameter("debug") == "true" ? true : false,
   onLoad: () => {
-    startRememberMe();
+    IframeQueue.getInstance();
+    // First and on its own, so an error elsewhere can't stop it. If it fails,
+    // CSS keeps the survey hidden inside the thank-you page iframe
+    // Parent mode on the donation page (submits the brand opt-in), embedded
+    // mode on the opt-in page (fills the email and submits)
+    try {
+      new SurveyLadder();
+    } catch (e) {
+      console.error("SurveyLadder failed:", e);
+    }
+    // Not in a thank-you page iframe (the survey): a Remember Me cookie would
+    // fill the email there and show the survey to a supporter EN doesn't know
+    if (!SurveyLadder.isEmbeddedOnThankYouPage()) startRememberMe();
     customScript(App);
   },
-  onResize: () => console.log("Starter Theme Window Resized"),
 };
+// Before new App, so it runs before ENgrid's own message listener
+SurveyLadder.ignoreQueueIframeMessages();
 new App(options);
