@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 12:50:09 ET
+ *  Date: Thursday, November 26, 2026 @ 13:19:51 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -28499,6 +28499,9 @@ _defineProperty(remember_me_RememberMe, "SHARED_PLATFORM_DOMAINS", ["e-activist.
  * matched against the field's own options, so a value with a comma (e.g.
  * "Yes, regularly") stays whole. Radio saves a single value.
  *
+ * Brand opt-in: a Form Block with the classes "hide survey-ladder-optin"
+ * holding the brand's opt-in. It goes with every answer (see setUpBrandOptIn).
+ *
  * Configuration errors go to console.error, with or without ?debug=true.
  */
 
@@ -28514,6 +28517,8 @@ const LADDER_PARAM = "survey_ladder";
 // The snippet keeps the survey URL here, so nothing loads until the parent
 // role checks the page
 const SRC_ATTRIBUTE = "data-survey-ladder-src";
+// Form Block with the brand's opt-in, hidden with ENgrid's "hide" class
+const OPTIN_CLASS = "survey-ladder-optin";
 class SurveyLadder {
   constructor() {
     _defineProperty(this, "logger", new EngridLogger("SurveyLadder", "white", "#7a2142", "📋"));
@@ -28556,6 +28561,8 @@ class SurveyLadder {
     if (formBlocks.length === 0) return; // Not the survey page
     if (engrid_ENGrid.getPageNumber() !== 1) return; // The survey's own thank-you page
 
+    this.setUpBrandOptIn();
+
     // Broken blocks are logged and left out
     const questions = formBlocks.map(formBlock => this.readQuestion(formBlock)).filter(question => question !== null);
     if (embedded) {
@@ -28566,7 +28573,29 @@ class SurveyLadder {
         this.reportRawMergeTags(questions);
       }
       questions.forEach(question => this.preselect(question));
+      this.requireAnAnswer(questions);
     }
+  }
+
+  /**
+   * Not in ladder mode (opened directly, from an email link), the questions
+   * aren't required, so a submit with no option checked would post the brand
+   * opt-in alone. At least one option on the page is required, with the error
+   * on the first question. Not by unchecking the opt-in: an unposted opt-in may
+   * be recorded as "N"
+   */
+  requireAnAnswer(questions) {
+    if (questions.length === 0) return;
+    const first = questions[0];
+    const hasAnswer = () => questions.some(question => question.options.some(option => option.checked));
+    questions.forEach(question => question.options.forEach(option => option.addEventListener("change", () => {
+      if (hasAnswer()) engrid_ENGrid.removeError(first.field);
+    })));
+    this.form.onValidate.subscribe(() => {
+      if (hasAnswer()) return;
+      engrid_ENGrid.setError(first.field, this.errorMessage());
+      this.form.validate = false;
+    });
   }
 
   // One question per action: the first one the supporter hasn't answered
@@ -28808,6 +28837,43 @@ class SurveyLadder {
     if (!bodyMain) return;
     const height = window.innerHeight - document.body.offsetHeight;
     if (height > 0) bodyMain.style.minHeight = `${height}px`;
+  }
+
+  /**
+   * Brand opt-in (SOW 1.1): every answer also sets the opt-in of the brand
+   * whose survey page this is to "Y". It's a hidden Form Block on the survey
+   * page, so it goes in the same submission as the answer, and no other opt-in
+   * is posted. Checked here and again on submit, since EN can pre-fill it from
+   * the record (e.g. a previous "N")
+   */
+  setUpBrandOptIn() {
+    const block = document.querySelector(`.${OPTIN_CLASS}`);
+    if (!block) {
+      this.configError(`No brand opt-in found (a Form Block with the class ${OPTIN_CLASS})`);
+      return;
+    }
+    // EN leaves an opt-in out of the page when the supporter already has "Y"
+    // (e.g. coming from a broadcast email), so an empty block isn't an error
+    if (!block.querySelector('input[name^="supporter.questions."]')) {
+      this.logger.log("The brand opt-in isn't on the page (already Y?)");
+      return;
+    }
+    const inputs = Array.from(document.querySelectorAll(`.${OPTIN_CLASS} input[name^="supporter.questions."]`));
+    const names = inputs.map(input => input.name).filter((name, index, all) => all.indexOf(name) === index);
+    // Exactly one, so no other opt-in is touched. A warning only: the page
+    // builder renders the opt-in pre-checked, so the submit isn't blocked
+    if (names.length !== 1) {
+      this.configError(`The brand opt-in block (.${OPTIN_CLASS}) needs exactly one opt-in question, found ${names.length}${names.length ? ` (${names.join(", ")})` : ""}. Not checked`);
+      return;
+    }
+    const optIn = inputs.filter(input => input.type === "checkbox" || input.type === "radio" && input.value === "Y");
+    if (optIn.length === 0) {
+      this.configError(`${names[0]} has no checkbox or "Y" option. Not checked`);
+      return;
+    }
+    const check = () => optIn.forEach(input => input.checked = true);
+    check();
+    this.form.onSubmit.subscribe(check);
   }
 
   // Screen readers land on the thank-you message after the answer.
