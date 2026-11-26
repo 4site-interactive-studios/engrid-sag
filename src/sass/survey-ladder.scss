@@ -6,34 +6,71 @@ body[data-engrid-survey-ladder="hidden"] {
   display: none;
 }
 
-// Survey page: holds the supporter data merge tag of each question
-.survey-ladder-saved {
-  display: none;
+// Survey page embedded on a thank-you page: no padding around the question, so it
+// lines up with the parent page. The theme adds 60px on the sides and 40px on top
+body[data-engrid-survey-ladder="ladder"] .body-main {
+  padding: 0;
 }
 
-// Survey page: one option per line. EN lays checkbox items out inline, and
-// ENgrid's column layout only applies inside Form Blocks, not Text Blocks
-.survey-ladder-options .en__field__element--checkbox,
-.survey-ladder-options .en__field__item {
+// Survey page: the field label is the question. The theme hides Checkbox
+// field labels in Form Blocks (see page-template-styles.scss)
+[data-engrid-theme="sag"]
+  .en__component--formblock.survey-ladder
+  .en__field.en__field--checkbox
+  > .en__field__label {
   display: block;
 }
 
-// Parent thank-you page: the iframe's container and the curtain over it
-.survey-ladder-wrapper {
-  position: relative;
+// Survey page: Radio options look like the Checkbox options. The theme styles
+// option labels as centered buttons (for donation amounts) and only resets
+// Checkbox ones (see page-template-styles.scss)
+[data-engrid-theme="sag"]
+  .en__component--formblock.survey-ladder
+  input.en__field__input--radio
+  + label.en__field__label.en__field__label--item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: auto;
+  min-height: 2rem;
+  padding: 0;
+  margin-left: 0;
+  font-family: var(--default_font-family);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+  text-transform: none;
+
+  &:before {
+    margin-right: 10px;
+  }
 }
 
-.survey-ladder-curtain {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  text-align: center;
-  background: #fff;
+// Survey page: a selected Radio is a brand-color circle with a white dot
+[data-engrid-theme="sag"]
+  .en__component--formblock.survey-ladder
+  input.en__field__input--radio:checked
+  + label.en__field__label.en__field__label--item:before {
+  background: radial-gradient(
+    circle,
+    var(--color_white) 0 30%,
+    var(--color_cta) 32%
+  );
+  border-color: var(--color_cta);
+  box-shadow: none;
+}
 
-  &[hidden] {
-    display: none;
+// Survey page: no focus ring on a mouse click. ENgrid outlines the label of a
+// focused Checkbox or Radio; keyboard users still get it (:focus-visible)
+[data-engrid-theme="sag"] .en__component--formblock.survey-ladder {
+  .en__field__input--checkbox:focus:not(:focus-visible) + .en__field__label,
+  .en__field__input--radio:focus:not(:focus-visible) + .en__field__label {
+    outline: none;
   }
+}
+
+// Survey page: the Text Block with the supporter data merge tag of each question
+.survey-ladder-saved {
+  display: none;
 }

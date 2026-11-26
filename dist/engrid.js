@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Wednesday, November 25, 2026 @ 07:16:16 ET
+ *  Date: Thursday, November 26, 2026 @ 09:16:02 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -28462,72 +28462,66 @@ _defineProperty(remember_me_RememberMe, "SHARED_PLATFORM_DOMAINS", ["e-activist.
 /**
  * Survey Ladder
  *
- * Survey page, embedded on a thank-you page: shows the first question the
- * supporter hasn't answered and turns its option list into checkboxes. The
- * question's hidden supporter field (Text type) saves the labels of the checked
- * options as a comma-separated list, for example
- * "Ministries stories, Community updates (Franciscan Way)".
+ * Each question is a Form Block with the classes "survey-ladder" and
+ * "direction-column", holding one custom supporter field of type Checkbox or
+ * Radio. EN renders the options and saves the checked ones as a
+ * comma-separated list (a single value for Radio).
+ *
+ * Saved answers come from EN supporter data merge tags, since ?chain fills the
+ * email but not custom supporter fields. One Text Block with the class
+ * "survey-ladder-saved" (hidden by CSS) holds a merge tag per question, each in
+ * a paragraph named after its field:
+ *   <p class="survey-ladder-saved--NOT_TAGGED_20">{user_data~...}</p>
+ *
+ * Survey page embedded on a thank-you page: shows only the first question
+ * with no saved answer, and at least one option is required.
  *
  * Survey page anywhere else (opened directly, from an email campaign link, or
- * chained from another page): every question shows as checkboxes, nothing is
- * hidden, and nothing is required.
+ * chained from another page): every question shows. EN pre-checks the options
+ * itself when it pre-fills the page; when it doesn't (a ?chain redirect), the
+ * options in the merge tag are pre-checked here, so an earlier answer is kept.
  *
- * In both cases, options whose labels are already in the hidden field come
- * pre-checked, so a pre-filled page never wipes an earlier answer.
- *
- * Parent thank-you page: covers the iframe with a thank-you curtain once the
- * survey reaches its own thank-you page, without the parent page jumping.
- *
- * Survey page structure (EN page builder, inside body-main with the
- * "force-visibility" class):
- * - Text Block, class "survey-ladder-question": the question in a <p>, the
- *   options in a <ul>, and a <p class="survey-ladder-saved"> holding the
- *   supporter data merge tag of that question's field
- * - Form Block, class "survey-ladder": that question's hidden field (Text type)
- *
- * On the embedded thank-you page, the answered state comes from the merge tags:
- * ?chain fills the email but not custom supporter fields.
- *
- * Option labels must not contain commas, since commas separate the saved labels.
+ * Checkbox option values must not contain commas, since commas separate saved
+ * values. Radio values can (e.g. "Yes, regularly"): Radio saves a single value.
  */
 
-const SUBMITTED_MESSAGE = "engrid-survey-ladder:submitted";
 const ERROR_MESSAGE = "Please choose at least one option.";
-const DEFAULT_CURTAIN_TEXT = "Thank you! Your answer was saved.";
-const LABEL_SEPARATOR = ", ";
+const SAVED_CLASS = "survey-ladder-saved";
 class SurveyLadder {
   constructor() {
     _defineProperty(this, "logger", new EngridLogger("SurveyLadder", "white", "#7a2142", "📋"));
     _defineProperty(this, "form", EnForm.getInstance());
     this.runOnSurveyPage();
-    if (!this.inIframe()) this.runOnParentPage();
   }
   runOnSurveyPage() {
-    const blocks = Array.from(document.querySelectorAll(".en__component--copyblock.survey-ladder-question"));
-    if (blocks.length === 0) return; // Not the survey page
+    // The survey's own thank-you page, in the iframe after the answer: no padding either
+    if (this.embeddedOnThankYouPage() && engrid_ENGrid.getPageNumber() > 1) {
+      engrid_ENGrid.setBodyData("survey-ladder", "ladder");
+      this.resizeIframe();
+      return;
+    }
+    const formBlocks = Array.from(document.querySelectorAll(".en__component--formblock.survey-ladder"));
+    if (formBlocks.length === 0) return; // Not the survey page
     if (engrid_ENGrid.getPageNumber() !== 1) return; // The survey's own thank-you page
 
-    const onThankYouPage = this.inIframe() && engrid_ENGrid.getBodyData("embedded") === "thank-you-page-donation";
-    const formBlocks = Array.from(document.querySelectorAll(".en__component--formblock.survey-ladder"));
-    if (blocks.length !== formBlocks.length) {
-      this.logger.error(`Found ${blocks.length} questions and ${formBlocks.length} form blocks; each question needs one of each`);
+    const onThankYouPage = this.embeddedOnThankYouPage();
+    const questions = formBlocks.map(formBlock => this.readQuestion(formBlock)).filter(question => question !== null);
+    if (questions.length !== formBlocks.length) {
       if (onThankYouPage) this.hideSurvey("Page structure doesn't match");
       return;
     }
-    const questions = blocks.map((block, index) => ({
-      block,
-      formBlock: formBlocks[index]
-    }));
     if (onThankYouPage) {
       this.runLadder(questions);
     } else {
       this.logger.log("Not embedded on a thank-you page, showing every question");
-      questions.forEach((question, index) => this.setUpQuestion(question, index, false));
+      questions.forEach(question => this.preselect(question));
     }
   }
 
   // One question per action: the first one the supporter hasn't answered
   runLadder(questions) {
+    engrid_ENGrid.setBodyData("survey-ladder", "ladder"); // Drops the page padding (CSS)
+
     if (!engrid_ENGrid.getFieldValue("supporter.emailAddress")) {
       this.hideSurvey("Supporter not identified");
       return;
@@ -28540,163 +28534,70 @@ class SurveyLadder {
 
     // Keep only the current question, so only its field is posted
     questions.forEach((question, index) => {
-      if (index === current) return;
-      question.block.remove();
-      question.formBlock.remove();
+      if (index !== current) question.formBlock.remove();
     });
-    if (!this.setUpQuestion(questions[current], current, true)) {
-      this.hideSurvey("Question structure doesn't match");
-      return;
-    }
-    this.form.onSubmit.subscribe(() => {
-      window.parent.postMessage({
-        type: SUBMITTED_MESSAGE
-      }, window.location.origin);
-    });
-    this.logger.log(`Showing question ${current + 1} of ${questions.length}`);
-    this.resizeIframe();
-  }
-
-  // Turns the option list into checkboxes tied to the hidden field
-  setUpQuestion(question, index, required) {
-    const field = this.getField(question);
-    const list = question.block.querySelector("ul");
-    const questionText = question.block.querySelector("p:not(.survey-ladder-saved)");
-    if (!field || !list || !questionText) {
-      this.logger.error(`Question ${index + 1} is missing its text, option list, or field`);
-      return false;
-    }
-    const {
-      group,
-      options
-    } = this.renderOptions(list, questionText, index);
-    this.preselect(options, field.value);
-    const checkedLabels = () => options.filter(option => option.checked).map(option => option.value);
-    options.forEach(option => option.addEventListener("change", () => {
-      const labels = checkedLabels();
-      field.value = labels.join(LABEL_SEPARATOR);
-      if (labels.length > 0) {
-        engrid_ENGrid.removeError(group);
+    const question = questions[current];
+    const hasAnswer = () => question.options.some(option => option.checked);
+    question.options.forEach(option => option.addEventListener("change", () => {
+      if (hasAnswer()) {
+        engrid_ENGrid.removeError(question.field);
         this.resizeIframe();
       }
     }));
-    if (required) {
-      this.form.onValidate.subscribe(() => {
-        const labels = checkedLabels();
-        if (labels.length === 0) {
-          engrid_ENGrid.setError(group, ERROR_MESSAGE);
-          this.form.validate = false;
-          this.resizeIframe();
-          return;
-        }
-        field.value = labels.join(LABEL_SEPARATOR);
-      });
+    this.form.onValidate.subscribe(() => {
+      if (hasAnswer()) return;
+      engrid_ENGrid.setError(question.field, ERROR_MESSAGE);
+      this.form.validate = false;
+      this.resizeIframe();
+    });
+    this.logger.log(`Showing question ${current + 1} of ${questions.length} (${question.fieldName})`);
+    this.resizeIframe();
+  }
+  readQuestion(formBlock) {
+    const options = Array.from(formBlock.querySelectorAll('input[type="checkbox"][name^="supporter."], input[type="radio"][name^="supporter."]'));
+    const field = options[0]?.closest(".en__field");
+    if (options.length === 0 || !field) {
+      this.logger.error("A survey-ladder Form Block has no Checkbox or Radio field");
+      return null;
     }
-    return true;
-  }
-
-  // Checks the options whose labels are already saved in the hidden field
-  preselect(options, savedValue) {
-    const saved = this.parseLabels(savedValue);
-    if (saved.length === 0) return;
-    options.forEach(option => {
-      option.checked = saved.includes(option.value);
-    });
-    const unknown = saved.filter(label => !options.some(option => option.value === label));
-    if (unknown.length > 0) {
-      this.logger.log(`Saved labels not in the option list: ${unknown.join(" | ")}`);
+    const fieldName = options[0].name; // e.g. supporter.NOT_TAGGED_20
+    const key = fieldName.replace(/^supporter\./, "");
+    const savedElement = document.querySelector(`.${SAVED_CLASS}--${key}`);
+    if (!savedElement) {
+      this.logger.error(`No merge tag found for ${fieldName} (expected .${SAVED_CLASS}--${key})`);
     }
-  }
-  runOnParentPage() {
-    const iframe = document.querySelector("iframe.survey-ladder-iframe");
-    const wrapper = iframe?.parentElement;
-    if (!iframe || !wrapper) return;
-
-    // The iframe's own container holds the curtain; moving the iframe would reload it
-    wrapper.classList.add("survey-ladder-wrapper");
-    const curtain = wrapper.querySelector(".survey-ladder-curtain") ?? this.createCurtain(wrapper);
-    curtain.hidden = true;
-    curtain.setAttribute("aria-live", "polite");
-
-    // Same scroll fix as NWF's Opt-In Ladder
-    document.documentElement.style.overflowAnchor = "none";
-
-    // Freeze the height on submit so the page doesn't jump while the survey TY loads
-    window.addEventListener("message", event => {
-      if (event.origin !== window.location.origin) return;
-      if (event.source !== iframe.contentWindow) return;
-      if (event.data?.type !== SUBMITTED_MESSAGE) return;
-      wrapper.style.minHeight = `${iframe.offsetHeight}px`;
-    });
-
-    // Show the curtain once the survey reaches its own thank-you page
-    iframe.addEventListener("load", () => {
-      if (this.getIframePageNumber(iframe) > 1) {
-        curtain.hidden = false;
-        this.logger.log("Survey answered, showing the curtain");
-      }
-    });
-  }
-  renderOptions(list, questionText, questionIndex) {
-    questionText.id = `survey-ladder-question-${questionIndex}`;
-
-    // EN's checkbox markup, so the theme styles apply; no name, so nothing is posted
-    const group = document.createElement("div");
-    group.className = "en__field en__field--checkbox survey-ladder-options";
-    const element = document.createElement("div");
-    element.className = "en__field__element en__field__element--checkbox";
-    element.setAttribute("role", "group");
-    element.setAttribute("aria-labelledby", questionText.id);
-    const options = Array.from(list.querySelectorAll("li")).map((item, index) => {
-      const label = (item.textContent || "").trim();
-      if (label.includes(",")) {
-        this.logger.error(`Option "${label}" has a comma; commas separate saved labels`);
-      }
-      const id = `survey-ladder-option-${questionIndex}-${index}`;
-      const wrapper = document.createElement("div");
-      wrapper.className = "en__field__item";
-      const option = document.createElement("input");
-      option.type = "checkbox";
-      option.id = id;
-      option.className = "en__field__input en__field__input--checkbox";
-      option.value = label;
-      const labelElement = document.createElement("label");
-      labelElement.className = "en__field__label en__field__label--item";
-      labelElement.htmlFor = id;
-      labelElement.textContent = label;
-      wrapper.append(option, labelElement);
-      element.append(wrapper);
-      return option;
-    });
-    group.append(element);
-    list.replaceWith(group);
     return {
-      group,
-      options
+      formBlock,
+      field,
+      fieldName,
+      options,
+      saved: this.parseSaved(savedElement?.textContent || "", options[0].type === "radio")
     };
   }
-  createCurtain(wrapper) {
-    const curtain = document.createElement("div");
-    curtain.className = "survey-ladder-curtain";
-    const text = document.createElement("p");
-    text.textContent = DEFAULT_CURTAIN_TEXT;
-    curtain.append(text);
-    wrapper.append(curtain);
-    return curtain;
-  }
-  getField(question) {
-    return question.formBlock.querySelector('input[name^="supporter."]');
+
+  // Answered: the merge tag has saved values, or EN pre-checked an option
+  isAnswered(question) {
+    return question.saved.length > 0 || question.options.some(option => option.checked);
   }
 
-  // Answered: the merge tag rendered saved labels, or the hidden field came pre-filled
-  isAnswered(question) {
-    const saved = question.block.querySelector(".survey-ladder-saved");
-    const fromMergeTag = this.parseLabels(saved?.textContent || "");
-    const fromField = this.parseLabels(this.getField(question)?.value || "");
-    return fromMergeTag.length > 0 || fromField.length > 0;
+  // Pre-checks the saved options when EN didn't (e.g. a ?chain redirect)
+  preselect(question) {
+    if (question.saved.length === 0) return;
+    if (question.options.some(option => option.checked)) return;
+    question.options.forEach(option => {
+      option.checked = question.saved.indexOf(option.value) !== -1;
+    });
+    const unknown = question.saved.filter(value => !question.options.some(option => option.value === value));
+    if (unknown.length > 0) {
+      this.logger.log(`Saved values not in ${question.fieldName}'s options: ${unknown.join(" | ")}`);
+    }
   }
-  parseLabels(value) {
-    return value.split(",").map(label => label.trim()).filter(label => label !== "");
+
+  // An unidentified visit renders the raw merge tag, which isn't an answer
+  parseSaved(text, singleValue) {
+    if (text.indexOf("{") !== -1) return [];
+    if (singleValue) return text.trim() ? [text.trim()] : [];
+    return text.split(",").map(value => value.trim()).filter(value => value !== "");
   }
   hideSurvey(reason) {
     this.logger.log(`Hiding the survey: ${reason}`);
@@ -28708,13 +28609,10 @@ class SurveyLadder {
   resizeIframe() {
     window.dispatchEvent(new Event("resize"));
   }
-  getIframePageNumber(iframe) {
-    try {
-      const pageJson = iframe.contentWindow?.pageJson;
-      return Number(pageJson?.pageNumber) || 0;
-    } catch (e) {
-      return 0; // Cross-origin: can't read the survey page
-    }
+
+  // Inside an iframe on a donation thank-you page (ENgrid sets "embedded")
+  embeddedOnThankYouPage() {
+    return this.inIframe() && engrid_ENGrid.getBodyData("embedded") === "thank-you-page-donation";
   }
   inIframe() {
     try {
