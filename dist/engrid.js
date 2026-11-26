@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 13:56:32 ET
+ *  Date: Thursday, November 26, 2026 @ 14:05:06 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -28520,11 +28520,14 @@ function resizeIframe() {
 
 
 const IFRAME_CLASS = "survey-ladder-iframe";
-// The snippet keeps the survey URL here, so nothing loads until the parent
-// role checks the page
-const SRC_ATTRIBUTE = "data-survey-ladder-src";
+// Survey page ID, on the snippet's iframe. Only the ID: the code builds the
+// URL, so no text from the page ever becomes the iframe's src
+const PAGE_ATTRIBUTE = "data-survey-ladder-page";
 // Brand opt-in page ID, on the snippet's iframe (one opt-in page per brand)
 const OPTIN_ATTRIBUTE = "data-survey-ladder-optin";
+// What the survey needs in the iframe: ?chain identifies the supporter,
+// survey_ladder=1 turns on ladder mode, engrid_hide drops the page chrome
+const SURVEY_QUERY = ["chain", `${LADDER_PARAM}=1`, "engrid_hide[body-headerOutside]=class", "engrid_hide[body-banner]=class", "engrid_hide[content-footer]=class", "engrid_hide[page-backgroundImage]=class"].join("&");
 // The survey takes the brand's look from this URL param (ENgrid's
 // UrlParamsToBodyAttrs puts it on the survey's body)
 const SUBTHEME_PARAM = "data-engrid-subtheme";
@@ -28534,8 +28537,8 @@ function runOnParentPage() {
   if (!iframe) return;
 
   // Only on the thank-you page of a single-step form (one form page, then
-  // the thank-you page). Anywhere else the iframe goes. The survey URL is in
-  // data-survey-ladder-src, so nothing has loaded yet
+  // the thank-you page). Anywhere else the iframe goes. The iframe has no src
+  // in the snippet, so nothing has loaded yet
   if (engrid_ENGrid.getPageCount() !== 2 || engrid_ENGrid.getPageNumber() !== 2) {
     logger.log("Not a single-step thank-you page, removing the survey");
     iframe.remove();
@@ -28545,9 +28548,14 @@ function runOnParentPage() {
   // Same scroll fix as NWF's Opt-In Ladder: the iframe changing height
   // doesn't make the browser scroll the page
   document.documentElement.style.overflowAnchor = "none";
-  const optInPageId = iframe.getAttribute(OPTIN_ATTRIBUTE);
+  const surveyPageId = readPageId(iframe, PAGE_ATTRIBUTE);
+  if (!surveyPageId) {
+    configError(`No survey page ID on the embed (${PAGE_ATTRIBUTE}). Nothing loads`);
+    return;
+  }
+  const optInPageId = readPageId(iframe, OPTIN_ATTRIBUTE);
   if (!optInPageId) {
-    configError(`No brand opt-in page on the embed (${OPTIN_ATTRIBUTE}). Answers save, but no opt-in is sent`);
+    configError(`No brand opt-in page ID on the embed (${OPTIN_ATTRIBUTE}). Answers save, but no opt-in is sent`);
   }
 
   // The email the answer was saved under, read when the survey is submitted
@@ -28582,10 +28590,7 @@ function runOnParentPage() {
       email = "";
     }
   });
-  const src = iframe.getAttribute(SRC_ATTRIBUTE);
-  if (src && !iframe.getAttribute("src")) {
-    iframe.src = withSubtheme(src);
-  }
+  iframe.src = surveyUrl(surveyPageId);
 }
 
 /**
@@ -28608,16 +28613,24 @@ function ignoreQueueIframeMessages() {
   });
 }
 
+// A page ID from the snippet, as a number (null if it isn't one)
+function readPageId(iframe, attribute) {
+  const value = (iframe.getAttribute(attribute) || "").trim();
+  return /^\d+$/.test(value) ? parseInt(value, 10) : null;
+}
+
 /**
- * The survey takes the donation page's brand look: its subtheme goes on the
- * survey URL, unless the snippet sets one. SAG's when the page has none
+ * Built from fixed parts and the page ID as a number. The survey takes the
+ * donation page's brand look: its subtheme goes on the URL, SAG's when the
+ * page has none (or an unexpected one)
  */
-function withSubtheme(src) {
-  const url = new URL(src, window.location.href);
-  if (!url.searchParams.has(SUBTHEME_PARAM)) {
-    url.searchParams.set(SUBTHEME_PARAM, engrid_ENGrid.getBodyData("subtheme") || DEFAULT_SUBTHEME);
-  }
-  return `${url.pathname}${url.search}`;
+function surveyUrl(pageId) {
+  const subtheme = engrid_ENGrid.getBodyData("subtheme") || "";
+  const safeSubtheme = /^[a-z0-9-]+$/.test(subtheme) ? subtheme : DEFAULT_SUBTHEME;
+  // Debug on the donation page (e.g. assets=local) turns it on in the survey,
+  // since the snippet no longer carries the URL
+  const debug = engrid_ENGrid.debug ? "&debug=true" : "";
+  return `/page/${pageId}/data/1?${SURVEY_QUERY}&${SUBTHEME_PARAM}=${encodeURIComponent(safeSubtheme)}${debug}`;
 }
 
 /**
@@ -28958,9 +28971,10 @@ function hideSurvey(reason) {
  * itself when it pre-fills the page; when it doesn't (a ?chain redirect), the
  * options in the merge tag are pre-checked here, so an earlier answer is kept.
  *
- * Parent thank-you page (iframe with the class "survey-ladder-iframe", survey
- * URL in data-survey-ladder-src): loads the survey only on single-step forms,
- * and keeps the page still while the survey moves to its own thank-you page.
+ * Parent thank-you page (iframe with the class "survey-ladder-iframe" and the
+ * survey page ID in data-survey-ladder-page): loads the survey only on
+ * single-step forms, and keeps the page still while the survey moves to its
+ * own thank-you page.
  *
  * Brand opt-in: once the answer is saved (the survey reaches its
  * thank-you page), the parent page submits that brand's small opt-in page in

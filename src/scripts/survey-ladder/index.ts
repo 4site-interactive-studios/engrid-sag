@@ -42,9 +42,10 @@
  * itself when it pre-fills the page; when it doesn't (a ?chain redirect), the
  * options in the merge tag are pre-checked here, so an earlier answer is kept.
  *
- * Parent thank-you page (iframe with the class "survey-ladder-iframe", survey
- * URL in data-survey-ladder-src): loads the survey only on single-step forms,
- * and keeps the page still while the survey moves to its own thank-you page.
+ * Parent thank-you page (iframe with the class "survey-ladder-iframe" and the
+ * survey page ID in data-survey-ladder-page): loads the survey only on
+ * single-step forms, and keeps the page still while the survey moves to its
+ * own thank-you page.
  *
  * Brand opt-in: once the answer is saved (the survey reaches its
  * thank-you page), the parent page submits that brand's small opt-in page in
