@@ -19,7 +19,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 11:59:43 ET
+ *  Date: Thursday, November 26, 2026 @ 12:50:09 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -9384,12 +9384,21 @@ body:not(#en__pagebuilder) .page-backgroundImage img{
   line-height:var(--strong_line-height);
 }
 
-body[data-engrid-embedded]:not([data-engrid-survey-ladder=ladder]) .body-main:has(.survey-ladder),body[data-engrid-survey-ladder=hidden]{
+body[data-engrid-embedded]:not([data-engrid-survey-ladder=ladder]) .body-main:has(.survey-ladder,.survey-ladder-thank-you),body[data-engrid-survey-ladder=hidden]{
   display:none;
 }
 
 body[data-engrid-survey-ladder=ladder] .body-main{
-  padding:0;
+  border:7px double var(--color_cta);
+  box-sizing:border-box;
+  padding:1.25rem;
+}
+
+body[data-engrid-survey-ladder=ladder][data-engrid-survey-ladder-step=thank-you] .body-main{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
 }
 
 [data-engrid-theme=sag] .en__component--formblock.survey-ladder .en__field.en__field--checkbox>.en__field__label{
@@ -9437,6 +9446,14 @@ body[data-engrid-survey-ladder=ladder] .body-main{
 
 .survey-ladder-saved{
   display:none;
+}
+
+.survey-ladder-thank-you:focus{
+  outline:none;
+}
+
+iframe.survey-ladder-iframe:not(.loaded){
+  visibility:hidden;
 }
 body{
   opacity:1;

@@ -30,8 +30,9 @@
  * itself when it pre-fills the page; when it doesn't (a ?chain redirect), the
  * options in the merge tag are pre-checked here, so an earlier answer is kept.
  *
- * Parent thank-you page (iframe with the class "survey-ladder-iframe"): keeps
- * the page still while the survey moves to its own thank-you page.
+ * Parent thank-you page (iframe with the class "survey-ladder-iframe", survey
+ * URL in data-survey-ladder-src): loads the survey only on single-step forms,
+ * and keeps the page still while the survey moves to its own thank-you page.
  *
  * EN joins the checked values of a Checkbox with commas. Saved values are
  * matched against the field's own options, so a value with a comma (e.g.
@@ -50,6 +51,9 @@ const THANK_YOU_CLASS = "survey-ladder-thank-you";
 // ?survey_ladder=1 in the iframe src: ladder mode even if ENgrid can't read
 // the parent URL (cross-origin, a # in it, a thank-you page on page 1)
 const LADDER_PARAM = "survey_ladder";
+// The snippet keeps the survey URL here, so nothing loads until the parent
+// role checks the page
+const SRC_ATTRIBUTE = "data-survey-ladder-src";
 
 type MergeTagState = "rendered" | "raw" | "missing";
 
@@ -101,9 +105,13 @@ export class SurveyLadder {
   private runOnSurveyPage() {
     const embedded = SurveyLadder.isEmbeddedOnThankYouPage();
 
-    // The survey's own thank-you page, in the iframe after the answer: no padding either
+    // The survey's own thank-you page, in the iframe after the answer: same box,
+    // filling the iframe, with the message centered (CSS)
     if (embedded && document.querySelector(`.${THANK_YOU_CLASS}`)) {
-      ENGrid.setBodyData("survey-ladder", "ladder");
+      ENGrid.setBodyData("survey-ladder-step", "thank-you");
+      this.fillIframe();
+      ENGrid.setBodyData("survey-ladder", "ladder"); // Shows the box (CSS)
+      this.focusThankYou();
       this.resizeIframe();
       return;
     }
@@ -192,6 +200,18 @@ export class SurveyLadder {
           .map((error) => error.textContent?.trim())
           .join(" | ")}`
       );
+    }
+
+    // The survey's thank-you page gets ?chain&survey_ladder=1 too. With ?chain,
+    // ENgrid's iFrame doesn't ask the parent to scroll when it loads
+    // (iframe.js shouldScroll), and the flag keeps ladder mode there without
+    // ENgrid's parent URL check. EN doesn't carry the query by itself
+    const form = ENGrid.enForm;
+    if (form?.action) {
+      const action = new URL(form.action, window.location.href);
+      action.searchParams.set("chain", "");
+      action.searchParams.set(LADDER_PARAM, "1");
+      form.action = action.toString();
     }
 
     // Last, once the other blocks are gone: shows the question (CSS) and drops
@@ -372,37 +392,39 @@ export class SurveyLadder {
     );
     if (!iframe) return;
 
+    // Only on the thank-you page of a single-step form (one form page, then
+    // the thank-you page). Anywhere else the iframe goes. The survey URL is in
+    // data-survey-ladder-src, so nothing has loaded yet
+    if (ENGrid.getPageCount() !== 2 || ENGrid.getPageNumber() !== 2) {
+      this.logger.log("Not a single-step thank-you page, removing the survey");
+      iframe.remove();
+      return;
+    }
+
     // Same scroll fix as NWF's Opt-In Ladder: the iframe changing height
     // doesn't make the browser scroll the page
     document.documentElement.style.overflowAnchor = "none";
 
-    // Capture phase: runs before ENgrid's iFrame listener, so it can stop it
-    window.addEventListener(
-      "message",
-      (event) => {
-        if (event.origin !== window.location.origin) return;
-        if (event.source !== iframe.contentWindow) return;
-        const data = event.data || {};
+    // ENgrid sends "submit" from the survey's onSubmit. Freezing the height
+    // keeps the iframe from shrinking when the survey's thank-you page loads
+    window.addEventListener("message", (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== iframe.contentWindow) return;
+      if (event.data?.status === "submit") {
+        iframe.style.minHeight = `${iframe.offsetHeight}px`;
+      }
+    });
 
-        // ENgrid sends "submit" from the survey's onSubmit. Freezing the height
-        // keeps the iframe from shrinking when the survey's thank-you page loads
-        if (data.status === "submit") {
-          iframe.style.minHeight = `${iframe.offsetHeight}px`;
-          return;
-        }
+    // Back on page 1 (the Back button, or an EN error after submit): the height
+    // follows the page again, so a hidden survey doesn't leave an empty box. On
+    // load, not on ENgrid's height message: one also comes 100ms after the
+    // submit click, before the thank-you page
+    iframe.addEventListener("load", () => {
+      if (this.getIframePageNumber(iframe) === 1) iframe.style.minHeight = "";
+    });
 
-        // When the survey's thank-you page loads, ENgrid asks the parent to
-        // scroll to the iframe (the referrer is an EN page). The answer was given
-        // in place, so the page stays put. An EN error on page 1 still scrolls
-        if ("scroll" in data && this.getIframePageNumber(iframe) > 1) {
-          event.stopImmediatePropagation();
-          this.logger.log(
-            "Ignored the scroll from the survey's thank-you page"
-          );
-        }
-      },
-      true
-    );
+    const src = iframe.getAttribute(SRC_ATTRIBUTE);
+    if (src && !iframe.getAttribute("src")) iframe.src = src;
   }
 
   private getIframePageNumber(iframe: HTMLIFrameElement): number {
@@ -412,6 +434,30 @@ export class SurveyLadder {
     } catch (e) {
       return 0; // Cross-origin: can't read the survey page
     }
+  }
+
+  /**
+   * The parent keeps the iframe at the question's height (runOnParentPage), so
+   * the box grows to fill it and the thank-you message sits in the same space.
+   * Runs while .body-main is still hidden (CSS), so the body's height is
+   * everything else. min-height is a floor: a taller message still grows the
+   * box. A px value set once: a vh height would feed back into the height
+   * ENgrid sends and keep growing the iframe
+   */
+  private fillIframe() {
+    const bodyMain = document.querySelector<HTMLElement>(".body-main");
+    if (!bodyMain) return;
+    const height = window.innerHeight - document.body.offsetHeight;
+    if (height > 0) bodyMain.style.minHeight = `${height}px`;
+  }
+
+  // Screen readers land on the thank-you message after the answer.
+  // preventScroll: focusing inside the iframe can scroll the parent page
+  private focusThankYou() {
+    const message = document.querySelector<HTMLElement>(`.${THANK_YOU_CLASS}`);
+    if (!message) return;
+    message.setAttribute("tabindex", "-1");
+    message.focus({ preventScroll: true });
   }
 
   // Only after DOM changes made on load. ENgrid 0.28.5 resends the height on

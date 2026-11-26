@@ -6,18 +6,32 @@ body[data-engrid-survey-ladder="hidden"] {
   display: none;
 }
 
-// Survey page in an iframe: hidden until the script picks the question, so a
-// failure (a script error, the thank-you page not detected) shows nothing
-// instead of every question, and the iframe doesn't open tall and then shrink
+// Survey page in an iframe: hidden until the script picks the question (or sets
+// up the survey's thank-you page), so a failure shows nothing instead of every
+// question, and nothing paints before the box is ready
 body[data-engrid-embedded]:not([data-engrid-survey-ladder="ladder"])
-  .body-main:has(.survey-ladder) {
+  .body-main:has(.survey-ladder, .survey-ladder-thank-you) {
   display: none;
 }
 
-// Survey page embedded on a thank-you page: no padding around the question, so it
-// lines up with the parent page. The theme adds 60px on the sides and 40px on top
+// Survey page embedded on a thank-you page: a box like NWF's Opt-In Ladder, with
+// a double frame in the brand's color around the question and, after the
+// answer, around the survey's thank-you message. Replaces the theme's padding
+// (60px on the sides, 40px on top)
 body[data-engrid-survey-ladder="ladder"] .body-main {
-  padding: 0;
+  box-sizing: border-box;
+  padding: 1.25rem;
+  border: 7px double var(--color_cta);
+}
+
+// The survey's thank-you page fills the box (see fillIframe) with its message
+// centered
+body[data-engrid-survey-ladder="ladder"][data-engrid-survey-ladder-step="thank-you"]
+  .body-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
 }
 
 // Survey page: the field label is the question. The theme hides Checkbox
@@ -103,4 +117,17 @@ body[data-engrid-survey-ladder="ladder"] .body-main {
 // Survey page: the Text Block with the supporter data merge tag of each question
 .survey-ladder-saved {
   display: none;
+}
+
+// Survey's thank-you message: focused for screen readers (see focusThankYou),
+// with no focus ring, since it isn't a control
+.survey-ladder-thank-you:focus {
+  outline: none;
+}
+
+// Parent thank-you page: hidden from screen readers and the Tab key until the
+// survey sends a height (ENgrid adds "loaded"), and again when it hides.
+// visibility, not display, so the iframe still gets its height
+iframe.survey-ladder-iframe:not(.loaded) {
+  visibility: hidden;
 }
