@@ -38,12 +38,20 @@
  * matched against the field's own options, so a value with a comma (e.g.
  * "Yes, regularly") stays whole. Radio saves a single value.
  *
- * Brand opt-in: a Form Block with the classes "hide survey-ladder-optin"
- * holding the brand's opt-in. It goes with every answer (see setUpBrandOptIn).
+ * Brand opt-in: once the answer is saved (the survey reaches its
+ * thank-you page), the parent page submits that brand's small opt-in page in
+ * a hidden iframe, through ENgrid's IframeQueue. The opt-in page ID is on the
+ * snippet (data-survey-ladder-optin), so one survey page serves every brand.
+ * The survey also takes the donation page's subtheme (brand look).
  *
  * Configuration errors go to console.error, with or without ?debug=true.
  */
-import { ENGrid, EnForm, EngridLogger } from "@4site/engrid-scripts";
+import {
+  ENGrid,
+  EnForm,
+  EngridLogger,
+  IframeQueue,
+} from "@4site/engrid-scripts";
 
 const ERROR_KEY = "surveyLadder.error"; // EngridI18n key
 const ERROR_FALLBACK = "Please choose at least one option.";
@@ -57,8 +65,12 @@ const LADDER_PARAM = "survey_ladder";
 // The snippet keeps the survey URL here, so nothing loads until the parent
 // role checks the page
 const SRC_ATTRIBUTE = "data-survey-ladder-src";
-// Form Block with the brand's opt-in, hidden with ENgrid's "hide" class
-const OPTIN_CLASS = "survey-ladder-optin";
+// Brand opt-in page ID, on the snippet's iframe (one opt-in page per brand)
+const OPTIN_ATTRIBUTE = "data-survey-ladder-optin";
+// The survey takes the brand's look from this URL param (ENgrid's
+// UrlParamsToBodyAttrs puts it on the survey's body)
+const SUBTHEME_PARAM = "data-engrid-subtheme";
+const DEFAULT_SUBTHEME = "sag";
 
 type MergeTagState = "rendered" | "raw" | "missing";
 
@@ -99,6 +111,30 @@ export class SurveyLadder {
     );
   }
 
+  /**
+   * ENgrid's iFrame code in the hidden opt-in iframe sends its height and asks
+   * the parent to scroll (its referrer is an EN page, and IframeQueue strips
+   * ?chain). ENgrid's parent would grow the hidden iframe and scroll the page
+   * to it. index.ts calls this before new App, so this listener runs before
+   * ENgrid's in every browser and stops those messages. IframeQueue's own
+   * messages (with a "type") pass
+   */
+  static ignoreQueueIframeMessages() {
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      if (!("frameHeight" in data || "scroll" in data || "scrollTo" in data)) {
+        return;
+      }
+      const fromQueue = Array.from(
+        document.querySelectorAll<HTMLIFrameElement>(
+          "iframe.engrid-iframe--queue"
+        )
+      ).some((iframe) => iframe.contentWindow === event.source);
+      if (fromQueue) event.stopImmediatePropagation();
+    });
+  }
+
   private static inIframe(): boolean {
     try {
       return window.self !== window.top;
@@ -129,8 +165,6 @@ export class SurveyLadder {
     if (formBlocks.length === 0) return; // Not the survey page
     if (ENGrid.getPageNumber() !== 1) return; // The survey's own thank-you page
 
-    this.setUpBrandOptIn();
-
     // Broken blocks are logged and left out
     const questions = formBlocks
       .map((formBlock) => this.readQuestion(formBlock))
@@ -146,38 +180,7 @@ export class SurveyLadder {
         this.reportRawMergeTags(questions);
       }
       questions.forEach((question) => this.preselect(question));
-      this.requireAnAnswer(questions);
     }
-  }
-
-  /**
-   * Not in ladder mode (opened directly, from an email link), the questions
-   * aren't required, so a submit with no option checked would post the brand
-   * opt-in alone. At least one option on the page is required, with the error
-   * on the first question. Not by unchecking the opt-in: an unposted opt-in may
-   * be recorded as "N"
-   */
-  private requireAnAnswer(questions: SurveyQuestion[]) {
-    if (questions.length === 0) return;
-    const first = questions[0];
-    const hasAnswer = () =>
-      questions.some((question) =>
-        question.options.some((option) => option.checked)
-      );
-
-    questions.forEach((question) =>
-      question.options.forEach((option) =>
-        option.addEventListener("change", () => {
-          if (hasAnswer()) ENGrid.removeError(first.field);
-        })
-      )
-    );
-
-    this.form.onValidate.subscribe(() => {
-      if (hasAnswer()) return;
-      ENGrid.setError(first.field, this.errorMessage());
-      this.form.validate = false;
-    });
   }
 
   // One question per action: the first one the supporter hasn't answered
@@ -443,6 +446,16 @@ export class SurveyLadder {
     // doesn't make the browser scroll the page
     document.documentElement.style.overflowAnchor = "none";
 
+    const optInPageId = iframe.getAttribute(OPTIN_ATTRIBUTE);
+    if (!optInPageId) {
+      this.configError(
+        `No brand opt-in page on the embed (${OPTIN_ATTRIBUTE}). Answers save, but no opt-in is sent`
+      );
+    }
+
+    // The email the answer was saved under, read when the survey is submitted
+    let email = "";
+
     // ENgrid sends "submit" from the survey's onSubmit. Freezing the height
     // keeps the iframe from shrinking when the survey's thank-you page loads
     window.addEventListener("message", (event) => {
@@ -450,19 +463,83 @@ export class SurveyLadder {
       if (event.source !== iframe.contentWindow) return;
       if (event.data?.status === "submit") {
         iframe.style.minHeight = `${iframe.offsetHeight}px`;
+        email = this.readIframeEmail(iframe);
       }
     });
 
-    // Back on page 1 (the Back button, or an EN error after submit): the height
-    // follows the page again, so a hidden survey doesn't leave an empty box. On
-    // load, not on ENgrid's height message: one also comes 100ms after the
-    // submit click, before the thank-you page
     iframe.addEventListener("load", () => {
-      if (this.getIframePageNumber(iframe) === 1) iframe.style.minHeight = "";
+      const page = this.getIframePageNumber(iframe);
+      // Back on page 1 (the Back button, or an EN error after submit): the
+      // height follows the page again, so a hidden survey doesn't leave an
+      // empty box, and nothing was saved, so no opt-in. On load, not on
+      // ENgrid's height message: one also comes 100ms after the submit click,
+      // before the thank-you page
+      if (page === 1) {
+        iframe.style.minHeight = "";
+        email = "";
+        return;
+      }
+      // The survey's thank-you page: the answer is saved. Once per answer, so
+      // a reload of the thank-you page doesn't send it again
+      if (page > 1 && email && optInPageId) {
+        this.submitBrandOptIn(optInPageId, email);
+        email = "";
+      }
     });
 
     const src = iframe.getAttribute(SRC_ATTRIBUTE);
-    if (src && !iframe.getAttribute("src")) iframe.src = src;
+    if (src && !iframe.getAttribute("src")) {
+      iframe.src = this.withSubtheme(src);
+    }
+  }
+
+  /**
+   * The survey takes the donation page's brand look: its subtheme goes on the
+   * survey URL, unless the snippet sets one. SAG's when the page has none
+   */
+  private withSubtheme(src: string): string {
+    const url = new URL(src, window.location.href);
+    if (!url.searchParams.has(SUBTHEME_PARAM)) {
+      url.searchParams.set(
+        SUBTHEME_PARAM,
+        ENGrid.getBodyData("subtheme") || DEFAULT_SUBTHEME
+      );
+    }
+    return `${url.pathname}${url.search}`;
+  }
+
+  /**
+   * SOW 1.1: right after the answer is saved, an invisible submission to the
+   * brand's opt-in page (email plus that one opt-in, pre-checked) sets it to
+   * "Y". IframeQueue loads it in a hidden iframe, fills the email and submits.
+   * Hidden with visibility, so nothing in it can take focus
+   */
+  private submitBrandOptIn(pageId: string, email: string) {
+    const queue = IframeQueue.getInstance();
+    queue.enqueue({
+      url: `/page/${pageId}/data/1`,
+      fields: { "supporter.emailAddress": email },
+      iframeStyle: { visibility: "hidden" },
+      onComplete: () => this.logger.log(`Brand opt-in sent (page ${pageId})`),
+      onError: (error) =>
+        this.logger.error(
+          `Brand opt-in failed (page ${pageId}): ${error.message}`
+        ),
+    });
+    queue.process().catch(() => {
+      // Logged in onError
+    });
+  }
+
+  private readIframeEmail(iframe: HTMLIFrameElement): string {
+    try {
+      const field = iframe.contentDocument?.querySelector<HTMLInputElement>(
+        '[name="supporter.emailAddress"]'
+      );
+      return field?.value || "";
+    } catch (e) {
+      return ""; // Cross-origin: can't read the survey page
+    }
   }
 
   private getIframePageNumber(iframe: HTMLIFrameElement): number {
@@ -487,64 +564,6 @@ export class SurveyLadder {
     if (!bodyMain) return;
     const height = window.innerHeight - document.body.offsetHeight;
     if (height > 0) bodyMain.style.minHeight = `${height}px`;
-  }
-
-  /**
-   * Brand opt-in (SOW 1.1): every answer also sets the opt-in of the brand
-   * whose survey page this is to "Y". It's a hidden Form Block on the survey
-   * page, so it goes in the same submission as the answer, and no other opt-in
-   * is posted. Checked here and again on submit, since EN can pre-fill it from
-   * the record (e.g. a previous "N")
-   */
-  private setUpBrandOptIn() {
-    const block = document.querySelector(`.${OPTIN_CLASS}`);
-    if (!block) {
-      this.configError(
-        `No brand opt-in found (a Form Block with the class ${OPTIN_CLASS})`
-      );
-      return;
-    }
-    // EN leaves an opt-in out of the page when the supporter already has "Y"
-    // (e.g. coming from a broadcast email), so an empty block isn't an error
-    if (!block.querySelector('input[name^="supporter.questions."]')) {
-      this.logger.log("The brand opt-in isn't on the page (already Y?)");
-      return;
-    }
-
-    const inputs = Array.from(
-      document.querySelectorAll<HTMLInputElement>(
-        `.${OPTIN_CLASS} input[name^="supporter.questions."]`
-      )
-    );
-    const names = inputs
-      .map((input) => input.name)
-      .filter((name, index, all) => all.indexOf(name) === index);
-    // Exactly one, so no other opt-in is touched. A warning only: the page
-    // builder renders the opt-in pre-checked, so the submit isn't blocked
-    if (names.length !== 1) {
-      this.configError(
-        `The brand opt-in block (.${OPTIN_CLASS}) needs exactly one opt-in question, found ${
-          names.length
-        }${names.length ? ` (${names.join(", ")})` : ""}. Not checked`
-      );
-      return;
-    }
-
-    const optIn = inputs.filter(
-      (input) =>
-        input.type === "checkbox" ||
-        (input.type === "radio" && input.value === "Y")
-    );
-    if (optIn.length === 0) {
-      this.configError(
-        `${names[0]} has no checkbox or "Y" option. Not checked`
-      );
-      return;
-    }
-
-    const check = () => optIn.forEach((input) => (input.checked = true));
-    check();
-    this.form.onSubmit.subscribe(check);
   }
 
   // Screen readers land on the thank-you message after the answer.

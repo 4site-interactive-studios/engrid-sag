@@ -1,4 +1,4 @@
-import { Options, App } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
+import { Options, App, IframeQueue } from "@4site/engrid-scripts"; // Uses ENGrid via NPM
 // import { Options, App } from "../../engrid/packages/scripts"; // Uses ENGrid via Visual Studio Workspace
 
 import "./sass/main.scss";
@@ -77,6 +77,9 @@ const options: Options = {
   onLoad: () => {
     // First and on its own, so an error elsewhere can't stop it. If it fails,
     // CSS keeps the survey hidden inside the thank-you page iframe
+    // Parent mode on the donation page (submits the brand opt-in), embedded
+    // mode on the opt-in page (fills the email and submits)
+    IframeQueue.getInstance();
     try {
       new SurveyLadder();
     } catch (e) {
@@ -88,4 +91,6 @@ const options: Options = {
     customScript(App);
   },
 };
+// Before new App, so it runs before ENgrid's own message listener
+SurveyLadder.ignoreQueueIframeMessages();
 new App(options);

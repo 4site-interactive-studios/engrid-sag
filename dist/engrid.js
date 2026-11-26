@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 13:19:51 ET
+ *  Date: Thursday, November 26, 2026 @ 13:32:58 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -12174,9 +12174,6 @@ class RememberMeEvents {
 }
 
 ;// ./node_modules/@4site/engrid-scripts/dist/events/iframe-queue-events.js
-/* unused harmony import specifier */ var iframe_queue_events_SignalDispatcher;
-/* unused harmony import specifier */ var iframe_queue_events_SimpleEventDispatcher;
-/* unused harmony import specifier */ var iframe_queue_events_EngridLogger;
 /**
  * Singleton event hub for the Iframe Queue component.
  *
@@ -12199,12 +12196,12 @@ class RememberMeEvents {
 
 class IframeQueueEvents {
     constructor() {
-        this.logger = new iframe_queue_events_EngridLogger("IframeQueueEvents");
-        this._onChainComplete = new iframe_queue_events_SignalDispatcher();
-        this._onChainError = new iframe_queue_events_SimpleEventDispatcher();
-        this._onItemStart = new iframe_queue_events_SimpleEventDispatcher();
-        this._onItemComplete = new iframe_queue_events_SimpleEventDispatcher();
-        this._onItemError = new iframe_queue_events_SimpleEventDispatcher();
+        this.logger = new EngridLogger("IframeQueueEvents");
+        this._onChainComplete = new (strongly_typed_events_dist_namespaceFn().UD)();
+        this._onChainError = new (strongly_typed_events_dist_namespaceFn().IL)();
+        this._onItemStart = new (strongly_typed_events_dist_namespaceFn().IL)();
+        this._onItemComplete = new (strongly_typed_events_dist_namespaceFn().IL)();
+        this._onItemError = new (strongly_typed_events_dist_namespaceFn().IL)();
     }
     /** Returns the shared IframeQueueEvents singleton. */
     static getInstance() {
@@ -14476,12 +14473,26 @@ class iFrame {
     }
 }
 
+;// ./node_modules/@4site/engrid-scripts/dist/interfaces/iframe-queue-options.js
+/**
+ * Configuration interfaces for the Iframe Queue component.
+ *
+ * The Iframe Queue loads a sequence of embedded Engaging Networks pages
+ * one at a time, passes field values into them via `postMessage`, and
+ * exposes a global `IframeQueueEvents` instance so external code can
+ * subscribe to chain-completion. See iframe-queue.ts for the component.
+ *
+ * Configuration may be supplied either programmatically (via
+ * `IframeQueue.getInstance().enqueue(...).process()`) or declaratively
+ * by setting `window.EngridIframeQueue` on the host EN page before
+ * the ENgrid bundle loads.
+ */
+const IframeQueueOptionsDefaults = {
+    items: [],
+    autoStart: true,
+};
+
 ;// ./node_modules/@4site/engrid-scripts/dist/iframe-queue.js
-/* unused harmony import specifier */ var iframe_queue_EngridLogger;
-/* unused harmony import specifier */ var iframe_queue_ENGrid;
-/* unused harmony import specifier */ var iframe_queue_IframeQueueEvents;
-/* unused harmony import specifier */ var iframe_queue_EnForm;
-/* unused harmony import specifier */ var IframeQueueOptionsDefaults;
 /**
  * Iframe Queue — load embedded EN pages sequentially.
  *
@@ -14588,7 +14599,7 @@ const DEFAULT_TIMEOUT_MS = 30000;
  * Notable use case: any of the three works for forcing local-asset
  * loading on every queued QCB iframe during testing.
  */
-const PROPAGATED_PARENT_PARAMS = (/* unused pure expression or super */ null && ([
+const PROPAGATED_PARENT_PARAMS = [
     "assets",
     "engridjs",
     "engridcss",
@@ -14596,9 +14607,9 @@ const PROPAGATED_PARENT_PARAMS = (/* unused pure expression or super */ null && 
     "repo-owner",
     "debug",
     "mode",
-]));
+];
 /** Default visually-hidden style for queue iframes. */
-const DEFAULT_HIDDEN_STYLE = (/* unused pure expression or super */ null && ({
+const DEFAULT_HIDDEN_STYLE = {
     position: "absolute",
     width: "1px",
     height: "1px",
@@ -14606,7 +14617,7 @@ const DEFAULT_HIDDEN_STYLE = (/* unused pure expression or super */ null && ({
     top: "0",
     opacity: "0",
     border: "0",
-}));
+};
 class IframeQueue {
     /**
      * Returns the shared IframeQueue singleton. The bootstrap in app.ts
@@ -14621,9 +14632,9 @@ class IframeQueue {
         return IframeQueue.instance;
     }
     constructor() {
-        this.logger = new iframe_queue_EngridLogger("IframeQueue", "white", "#1f6feb", "🚂");
-        this.events = iframe_queue_IframeQueueEvents.getInstance();
-        this._form = iframe_queue_EnForm.getInstance();
+        this.logger = new EngridLogger("IframeQueue", "white", "#1f6feb", "🚂");
+        this.events = IframeQueueEvents.getInstance();
+        this._form = EnForm.getInstance();
         this.queue = [];
         this._isProcessing = false;
         this._aborted = false;
@@ -14800,7 +14811,7 @@ class IframeQueue {
         return new Promise((resolve, reject) => {
             var _a, _b;
             const url = this.prepareIframeUrl(item.url);
-            const expectedPageId = iframe_queue_ENGrid.getPageIdFromUrl(url);
+            const expectedPageId = engrid_ENGrid.getPageIdFromUrl(url);
             if (!expectedPageId) {
                 reject(new Error(`IframeQueue: could not parse Page ID from URL "${item.url}".`));
                 return;
@@ -14999,7 +15010,7 @@ class IframeQueue {
         if (item.keepIframeOnError)
             return true;
         try {
-            return iframe_queue_ENGrid.debug === true;
+            return engrid_ENGrid.debug === true;
         }
         catch (_a) {
             return false;
@@ -15078,7 +15089,7 @@ class IframeQueue {
                 // EN's form-validation state machine doesn't see the new
                 // values and leaves `en__submit--disabled` on the submit
                 // button, causing the auto-click below to no-op.
-                iframe_queue_ENGrid.setFieldValue(name, value, true, true);
+                engrid_ENGrid.setFieldValue(name, value, true, true);
             }
             if (autoSubmit) {
                 // Defer slightly so any synchronous EN dependency parsing in
@@ -15097,7 +15108,7 @@ class IframeQueue {
             this.logger.danger(`handlePopulate failed: ${error.message}`);
             window.parent.postMessage({
                 type: MSG_ERROR,
-                pageId: (_b = data.pageId) !== null && _b !== void 0 ? _b : iframe_queue_ENGrid.getPageID(),
+                pageId: (_b = data.pageId) !== null && _b !== void 0 ? _b : engrid_ENGrid.getPageID(),
                 message: error.message,
             }, "*");
         }
@@ -28499,8 +28510,11 @@ _defineProperty(remember_me_RememberMe, "SHARED_PLATFORM_DOMAINS", ["e-activist.
  * matched against the field's own options, so a value with a comma (e.g.
  * "Yes, regularly") stays whole. Radio saves a single value.
  *
- * Brand opt-in: a Form Block with the classes "hide survey-ladder-optin"
- * holding the brand's opt-in. It goes with every answer (see setUpBrandOptIn).
+ * Brand opt-in (SOW 1.1): once the answer is saved (the survey reaches its
+ * thank-you page), the parent page submits that brand's small opt-in page in
+ * a hidden iframe, through ENgrid's IframeQueue. The opt-in page ID is on the
+ * snippet (data-survey-ladder-optin), so one survey page serves every brand.
+ * The survey also takes the donation page's subtheme (brand look).
  *
  * Configuration errors go to console.error, with or without ?debug=true.
  */
@@ -28517,8 +28531,12 @@ const LADDER_PARAM = "survey_ladder";
 // The snippet keeps the survey URL here, so nothing loads until the parent
 // role checks the page
 const SRC_ATTRIBUTE = "data-survey-ladder-src";
-// Form Block with the brand's opt-in, hidden with ENgrid's "hide" class
-const OPTIN_CLASS = "survey-ladder-optin";
+// Brand opt-in page ID, on the snippet's iframe (one opt-in page per brand)
+const OPTIN_ATTRIBUTE = "data-survey-ladder-optin";
+// The survey takes the brand's look from this URL param (ENgrid's
+// UrlParamsToBodyAttrs puts it on the survey's body)
+const SUBTHEME_PARAM = "data-engrid-subtheme";
+const DEFAULT_SUBTHEME = "sag";
 class SurveyLadder {
   constructor() {
     _defineProperty(this, "logger", new EngridLogger("SurveyLadder", "white", "#7a2142", "📋"));
@@ -28536,6 +28554,26 @@ class SurveyLadder {
   static isEmbeddedOnThankYouPage() {
     if (!SurveyLadder.inIframe()) return false;
     return engrid_ENGrid.getBodyData("embedded") === "thank-you-page-donation" || engrid_ENGrid.getUrlParameter(LADDER_PARAM) === "1";
+  }
+
+  /**
+   * ENgrid's iFrame code in the hidden opt-in iframe sends its height and asks
+   * the parent to scroll (its referrer is an EN page, and IframeQueue strips
+   * ?chain). ENgrid's parent would grow the hidden iframe and scroll the page
+   * to it. index.ts calls this before new App, so this listener runs before
+   * ENgrid's in every browser and stops those messages. IframeQueue's own
+   * messages (with a "type") pass
+   */
+  static ignoreQueueIframeMessages() {
+    window.addEventListener("message", event => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      if (!("frameHeight" in data || "scroll" in data || "scrollTo" in data)) {
+        return;
+      }
+      const fromQueue = Array.from(document.querySelectorAll("iframe.engrid-iframe--queue")).some(iframe => iframe.contentWindow === event.source);
+      if (fromQueue) event.stopImmediatePropagation();
+    });
   }
   static inIframe() {
     try {
@@ -28561,8 +28599,6 @@ class SurveyLadder {
     if (formBlocks.length === 0) return; // Not the survey page
     if (engrid_ENGrid.getPageNumber() !== 1) return; // The survey's own thank-you page
 
-    this.setUpBrandOptIn();
-
     // Broken blocks are logged and left out
     const questions = formBlocks.map(formBlock => this.readQuestion(formBlock)).filter(question => question !== null);
     if (embedded) {
@@ -28573,29 +28609,7 @@ class SurveyLadder {
         this.reportRawMergeTags(questions);
       }
       questions.forEach(question => this.preselect(question));
-      this.requireAnAnswer(questions);
     }
-  }
-
-  /**
-   * Not in ladder mode (opened directly, from an email link), the questions
-   * aren't required, so a submit with no option checked would post the brand
-   * opt-in alone. At least one option on the page is required, with the error
-   * on the first question. Not by unchecking the opt-in: an unposted opt-in may
-   * be recorded as "N"
-   */
-  requireAnAnswer(questions) {
-    if (questions.length === 0) return;
-    const first = questions[0];
-    const hasAnswer = () => questions.some(question => question.options.some(option => option.checked));
-    questions.forEach(question => question.options.forEach(option => option.addEventListener("change", () => {
-      if (hasAnswer()) engrid_ENGrid.removeError(first.field);
-    })));
-    this.form.onValidate.subscribe(() => {
-      if (hasAnswer()) return;
-      engrid_ENGrid.setError(first.field, this.errorMessage());
-      this.form.validate = false;
-    });
   }
 
   // One question per action: the first one the supporter hasn't answered
@@ -28794,6 +28808,13 @@ class SurveyLadder {
     // Same scroll fix as NWF's Opt-In Ladder: the iframe changing height
     // doesn't make the browser scroll the page
     document.documentElement.style.overflowAnchor = "none";
+    const optInPageId = iframe.getAttribute(OPTIN_ATTRIBUTE);
+    if (!optInPageId) {
+      this.configError(`No brand opt-in page on the embed (${OPTIN_ATTRIBUTE}). Answers save, but no opt-in is sent`);
+    }
+
+    // The email the answer was saved under, read when the survey is submitted
+    let email = "";
 
     // ENgrid sends "submit" from the survey's onSubmit. Freezing the height
     // keeps the iframe from shrinking when the survey's thank-you page loads
@@ -28802,18 +28823,76 @@ class SurveyLadder {
       if (event.source !== iframe.contentWindow) return;
       if (event.data?.status === "submit") {
         iframe.style.minHeight = `${iframe.offsetHeight}px`;
+        email = this.readIframeEmail(iframe);
       }
     });
-
-    // Back on page 1 (the Back button, or an EN error after submit): the height
-    // follows the page again, so a hidden survey doesn't leave an empty box. On
-    // load, not on ENgrid's height message: one also comes 100ms after the
-    // submit click, before the thank-you page
     iframe.addEventListener("load", () => {
-      if (this.getIframePageNumber(iframe) === 1) iframe.style.minHeight = "";
+      const page = this.getIframePageNumber(iframe);
+      // Back on page 1 (the Back button, or an EN error after submit): the
+      // height follows the page again, so a hidden survey doesn't leave an
+      // empty box, and nothing was saved, so no opt-in. On load, not on
+      // ENgrid's height message: one also comes 100ms after the submit click,
+      // before the thank-you page
+      if (page === 1) {
+        iframe.style.minHeight = "";
+        email = "";
+        return;
+      }
+      // The survey's thank-you page: the answer is saved. Once per answer, so
+      // a reload of the thank-you page doesn't send it again
+      if (page > 1 && email && optInPageId) {
+        this.submitBrandOptIn(optInPageId, email);
+        email = "";
+      }
     });
     const src = iframe.getAttribute(SRC_ATTRIBUTE);
-    if (src && !iframe.getAttribute("src")) iframe.src = src;
+    if (src && !iframe.getAttribute("src")) {
+      iframe.src = this.withSubtheme(src);
+    }
+  }
+
+  /**
+   * The survey takes the donation page's brand look: its subtheme goes on the
+   * survey URL, unless the snippet sets one. SAG's when the page has none
+   */
+  withSubtheme(src) {
+    const url = new URL(src, window.location.href);
+    if (!url.searchParams.has(SUBTHEME_PARAM)) {
+      url.searchParams.set(SUBTHEME_PARAM, engrid_ENGrid.getBodyData("subtheme") || DEFAULT_SUBTHEME);
+    }
+    return `${url.pathname}${url.search}`;
+  }
+
+  /**
+   * SOW 1.1: right after the answer is saved, an invisible submission to the
+   * brand's opt-in page (email plus that one opt-in, pre-checked) sets it to
+   * "Y". IframeQueue loads it in a hidden iframe, fills the email and submits.
+   * Hidden with visibility, so nothing in it can take focus
+   */
+  submitBrandOptIn(pageId, email) {
+    const queue = IframeQueue.getInstance();
+    queue.enqueue({
+      url: `/page/${pageId}/data/1`,
+      fields: {
+        "supporter.emailAddress": email
+      },
+      iframeStyle: {
+        visibility: "hidden"
+      },
+      onComplete: () => this.logger.log(`Brand opt-in sent (page ${pageId})`),
+      onError: error => this.logger.error(`Brand opt-in failed (page ${pageId}): ${error.message}`)
+    });
+    queue.process().catch(() => {
+      // Logged in onError
+    });
+  }
+  readIframeEmail(iframe) {
+    try {
+      const field = iframe.contentDocument?.querySelector('[name="supporter.emailAddress"]');
+      return field?.value || "";
+    } catch (e) {
+      return ""; // Cross-origin: can't read the survey page
+    }
   }
   getIframePageNumber(iframe) {
     try {
@@ -28837,43 +28916,6 @@ class SurveyLadder {
     if (!bodyMain) return;
     const height = window.innerHeight - document.body.offsetHeight;
     if (height > 0) bodyMain.style.minHeight = `${height}px`;
-  }
-
-  /**
-   * Brand opt-in (SOW 1.1): every answer also sets the opt-in of the brand
-   * whose survey page this is to "Y". It's a hidden Form Block on the survey
-   * page, so it goes in the same submission as the answer, and no other opt-in
-   * is posted. Checked here and again on submit, since EN can pre-fill it from
-   * the record (e.g. a previous "N")
-   */
-  setUpBrandOptIn() {
-    const block = document.querySelector(`.${OPTIN_CLASS}`);
-    if (!block) {
-      this.configError(`No brand opt-in found (a Form Block with the class ${OPTIN_CLASS})`);
-      return;
-    }
-    // EN leaves an opt-in out of the page when the supporter already has "Y"
-    // (e.g. coming from a broadcast email), so an empty block isn't an error
-    if (!block.querySelector('input[name^="supporter.questions."]')) {
-      this.logger.log("The brand opt-in isn't on the page (already Y?)");
-      return;
-    }
-    const inputs = Array.from(document.querySelectorAll(`.${OPTIN_CLASS} input[name^="supporter.questions."]`));
-    const names = inputs.map(input => input.name).filter((name, index, all) => all.indexOf(name) === index);
-    // Exactly one, so no other opt-in is touched. A warning only: the page
-    // builder renders the opt-in pre-checked, so the submit isn't blocked
-    if (names.length !== 1) {
-      this.configError(`The brand opt-in block (.${OPTIN_CLASS}) needs exactly one opt-in question, found ${names.length}${names.length ? ` (${names.join(", ")})` : ""}. Not checked`);
-      return;
-    }
-    const optIn = inputs.filter(input => input.type === "checkbox" || input.type === "radio" && input.value === "Y");
-    if (optIn.length === 0) {
-      this.configError(`${names[0]} has no checkbox or "Y" option. Not checked`);
-      return;
-    }
-    const check = () => optIn.forEach(input => input.checked = true);
-    check();
-    this.form.onSubmit.subscribe(check);
   }
 
   // Screen readers land on the thank-you message after the answer.
@@ -28959,6 +29001,9 @@ const src_options = {
   onLoad: () => {
     // First and on its own, so an error elsewhere can't stop it. If it fails,
     // CSS keeps the survey hidden inside the thank-you page iframe
+    // Parent mode on the donation page (submits the brand opt-in), embedded
+    // mode on the opt-in page (fills the email and submits)
+    IframeQueue.getInstance();
     try {
       new SurveyLadder();
     } catch (e) {
@@ -28970,6 +29015,8 @@ const src_options = {
     customScript(App);
   }
 };
+// Before new App, so it runs before ENgrid's own message listener
+SurveyLadder.ignoreQueueIframeMessages();
 new App(src_options);
 })();
 
