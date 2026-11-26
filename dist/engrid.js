@@ -17,7 +17,7 @@
  *
  *  ENGRID PAGE TEMPLATE ASSETS
  *
- *  Date: Thursday, November 26, 2026 @ 11:47:31 ET
+ *  Date: Thursday, November 26, 2026 @ 11:59:43 ET
  *  By: rcw-015crmhcbdw61kq4jeiw2zzy
  *  ENGrid styles: v0.28.3
  *  ENGrid scripts: v0.28.5
@@ -28514,7 +28514,6 @@ class SurveyLadder {
   constructor() {
     _defineProperty(this, "logger", new EngridLogger("SurveyLadder", "white", "#7a2142", "📋"));
     _defineProperty(this, "form", EnForm.getInstance());
-    _defineProperty(this, "dataLayer", DataLayer.getInstance());
     this.runOnSurveyPage();
     if (!SurveyLadder.inIframe()) this.runOnParentPage();
   }
@@ -28565,7 +28564,7 @@ class SurveyLadder {
   // One question per action: the first one the supporter hasn't answered
   runLadder(formBlocks, questions) {
     if (!engrid_ENGrid.getFieldValue("supporter.emailAddress")) {
-      this.hideSurvey("no-email", "Supporter not identified (no email)");
+      this.hideSurvey("Supporter not identified (no email)");
       return;
     }
 
@@ -28573,13 +28572,13 @@ class SurveyLadder {
     // EN doesn't know the supporter, or the Text Block is missing
     const usable = questions.filter(question => question.mergeTag === "rendered");
     if (usable.length === 0) {
-      this.hideSurvey("no-merge-tag", "No merge tag rendered");
+      this.hideSurvey("No merge tag rendered");
       return;
     }
     this.reportRawMergeTags(questions);
     const current = usable.find(question => !this.isAnswered(question));
     if (!current) {
-      this.hideSurvey("all-answered", "Every question is answered");
+      this.hideSurvey("Every question is answered");
       return;
     }
 
@@ -28588,7 +28587,6 @@ class SurveyLadder {
       if (formBlock !== current.formBlock) formBlock.remove();
     });
     const hasAnswer = () => current.options.some(option => option.checked);
-    const checkedCount = () => current.options.filter(option => option.checked).length;
 
     // The click on an option makes ENgrid resend the iframe height
     current.options.forEach(option => option.addEventListener("change", () => {
@@ -28604,15 +28602,6 @@ class SurveyLadder {
     });
     const step = formBlocks.indexOf(current.formBlock) + 1;
     const total = formBlocks.length;
-    const label = this.questionLabel(current);
-    this.form.onSubmit.subscribe(() => {
-      // How many options, not which: the answer itself goes to EN only
-      this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SUBMIT", {
-        survey_field: current.key,
-        survey_question: label,
-        survey_options_checked: checkedCount()
-      });
-    });
 
     // EN error after submit: EN shows page 1 again with its error list, and the
     // same question shows again, since its answer wasn't saved
@@ -28624,12 +28613,6 @@ class SurveyLadder {
     // Last, once the other blocks are gone: shows the question (CSS) and drops
     // the page padding
     engrid_ENGrid.setBodyData("survey-ladder", "ladder");
-    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SHOWN", {
-      survey_field: current.key,
-      survey_question: label,
-      survey_step: step,
-      survey_total_steps: total
-    });
     this.logger.log(`Showing question ${step} of ${total} (${current.fieldName})`);
     this.resizeIframe();
   }
@@ -28663,7 +28646,6 @@ class SurveyLadder {
       formBlock,
       field,
       fieldName,
-      key,
       options,
       mergeTag,
       saved: mergeTag === "rendered" ? this.parseSaved(text, options, options[0].type === "radio") : []
@@ -28727,20 +28709,13 @@ class SurveyLadder {
     }
     return saved;
   }
-  questionLabel(question) {
-    const label = question.field.querySelector(":scope > .en__field__label");
-    return label?.textContent?.trim() || question.key;
-  }
   errorMessage() {
     const text = engrid_ENGrid.t(ERROR_KEY);
     return text && text !== ERROR_KEY ? text : ERROR_FALLBACK;
   }
-  hideSurvey(reason, description) {
-    this.logger.log(`Hiding the survey: ${description}`);
+  hideSurvey(reason) {
+    this.logger.log(`Hiding the survey: ${reason}`);
     engrid_ENGrid.setBodyData("survey-ladder", "hidden");
-    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_HIDDEN", {
-      survey_hidden_reason: reason
-    });
     this.resizeIframe();
   }
 

@@ -39,7 +39,7 @@
  *
  * Configuration errors go to console.error, with or without ?debug=true.
  */
-import { DataLayer, ENGrid, EnForm, EngridLogger } from "@4site/engrid-scripts";
+import { ENGrid, EnForm, EngridLogger } from "@4site/engrid-scripts";
 
 const ERROR_KEY = "surveyLadder.error"; // EngridI18n key
 const ERROR_FALLBACK = "Please choose at least one option.";
@@ -57,7 +57,6 @@ interface SurveyQuestion {
   formBlock: HTMLElement;
   field: HTMLElement; // The .en__field wrapper, for errors
   fieldName: string; // e.g. supporter.NOT_TAGGED_20
-  key: string; // e.g. NOT_TAGGED_20
   options: HTMLInputElement[];
   mergeTag: MergeTagState;
   saved: string[]; // Values from the merge tag
@@ -71,7 +70,6 @@ export class SurveyLadder {
     "📋"
   );
   private form: EnForm = EnForm.getInstance();
-  private dataLayer: DataLayer = DataLayer.getInstance();
 
   constructor() {
     this.runOnSurveyPage();
@@ -139,7 +137,7 @@ export class SurveyLadder {
   // One question per action: the first one the supporter hasn't answered
   private runLadder(formBlocks: HTMLElement[], questions: SurveyQuestion[]) {
     if (!ENGrid.getFieldValue("supporter.emailAddress")) {
-      this.hideSurvey("no-email", "Supporter not identified (no email)");
+      this.hideSurvey("Supporter not identified (no email)");
       return;
     }
 
@@ -149,14 +147,14 @@ export class SurveyLadder {
       (question) => question.mergeTag === "rendered"
     );
     if (usable.length === 0) {
-      this.hideSurvey("no-merge-tag", "No merge tag rendered");
+      this.hideSurvey("No merge tag rendered");
       return;
     }
     this.reportRawMergeTags(questions);
 
     const current = usable.find((question) => !this.isAnswered(question));
     if (!current) {
-      this.hideSurvey("all-answered", "Every question is answered");
+      this.hideSurvey("Every question is answered");
       return;
     }
 
@@ -166,8 +164,6 @@ export class SurveyLadder {
     });
 
     const hasAnswer = () => current.options.some((option) => option.checked);
-    const checkedCount = () =>
-      current.options.filter((option) => option.checked).length;
 
     // The click on an option makes ENgrid resend the iframe height
     current.options.forEach((option) =>
@@ -186,16 +182,6 @@ export class SurveyLadder {
 
     const step = formBlocks.indexOf(current.formBlock) + 1;
     const total = formBlocks.length;
-    const label = this.questionLabel(current);
-
-    this.form.onSubmit.subscribe(() => {
-      // How many options, not which: the answer itself goes to EN only
-      this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SUBMIT", {
-        survey_field: current.key,
-        survey_question: label,
-        survey_options_checked: checkedCount(),
-      });
-    });
 
     // EN error after submit: EN shows page 1 again with its error list, and the
     // same question shows again, since its answer wasn't saved
@@ -211,12 +197,6 @@ export class SurveyLadder {
     // Last, once the other blocks are gone: shows the question (CSS) and drops
     // the page padding
     ENGrid.setBodyData("survey-ladder", "ladder");
-    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_SHOWN", {
-      survey_field: current.key,
-      survey_question: label,
-      survey_step: step,
-      survey_total_steps: total,
-    });
     this.logger.log(
       `Showing question ${step} of ${total} (${current.fieldName})`
     );
@@ -271,7 +251,6 @@ export class SurveyLadder {
       formBlock,
       field,
       fieldName,
-      key,
       options,
       mergeTag,
       saved:
@@ -366,22 +345,14 @@ export class SurveyLadder {
     return saved;
   }
 
-  private questionLabel(question: SurveyQuestion): string {
-    const label = question.field.querySelector(":scope > .en__field__label");
-    return label?.textContent?.trim() || question.key;
-  }
-
   private errorMessage(): string {
     const text = ENGrid.t(ERROR_KEY);
     return text && text !== ERROR_KEY ? text : ERROR_FALLBACK;
   }
 
-  private hideSurvey(reason: string, description: string) {
-    this.logger.log(`Hiding the survey: ${description}`);
+  private hideSurvey(reason: string) {
+    this.logger.log(`Hiding the survey: ${reason}`);
     ENGrid.setBodyData("survey-ladder", "hidden");
-    this.dataLayer.pushEvent("ENGRID_SURVEY_LADDER_HIDDEN", {
-      survey_hidden_reason: reason,
-    });
     this.resizeIframe();
   }
 
